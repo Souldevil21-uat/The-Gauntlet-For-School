@@ -8,7 +8,7 @@ public class TankPawn : Pawn
     [SerializeField] private float maxSpeed = 10f;     // Maximum movement speed
 
     private float currentSpeed = 0f; // Tracks current movement speed
-    private Rigidbody rb; // ✅ Added Rigidbody reference
+    [SerializeField] private new Rigidbody rb;
 
     protected override void Start()
     {
@@ -31,39 +31,32 @@ public class TankPawn : Pawn
 
     public override void Move(float input)
     {
-        if (rb == null)
-        {
-            Debug.LogWarning(gameObject.name + " ❌ Cannot move: Rigidbody is null!");
-            return;
-        }
-
         if (input != 0)
         {
-            // Apply acceleration based on input direction
+            Debug.Log(gameObject.name + " 🚜 Move() called with input: " + input);
             currentSpeed += acceleration * input * Time.deltaTime;
         }
         else
         {
-            // Apply deceleration when no input is given
             if (currentSpeed > 0)
             {
                 currentSpeed -= deceleration * Time.deltaTime;
-                currentSpeed = Mathf.Max(currentSpeed, 0); // Prevents reversing when stopping
+                currentSpeed = Mathf.Max(currentSpeed, 0);
             }
             else if (currentSpeed < 0)
             {
                 currentSpeed += deceleration * Time.deltaTime;
-                currentSpeed = Mathf.Min(currentSpeed, 0); // Prevents forward movement when stopping
+                currentSpeed = Mathf.Min(currentSpeed, 0);
             }
         }
 
-        // Clamp the speed within the maxSpeed range
         currentSpeed = Mathf.Clamp(currentSpeed, -maxSpeed, maxSpeed);
 
-        // Move the tank forward based on currentSpeed
         Vector3 moveDirection = transform.forward * currentSpeed * Time.deltaTime;
+        Debug.Log(gameObject.name + " 🏎 Moving in direction: " + moveDirection);
         rb.MovePosition(rb.position + moveDirection);
     }
+
 
     public override void Rotate(float input)
     {

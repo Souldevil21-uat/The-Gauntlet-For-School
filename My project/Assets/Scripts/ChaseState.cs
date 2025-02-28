@@ -16,6 +16,8 @@ public class ChaseState : State
 
     public override void Execute(AIController ai)
     {
+        Debug.Log(ai.gameObject.name + " 🔄 Running ChaseState...");
+
         if (!ai.CanSeePlayer())
         {
             Debug.Log(ai.gameObject.name + " ❌ Lost sight of player. Returning to patrol.");
@@ -23,26 +25,17 @@ public class ChaseState : State
             return;
         }
 
-        // ✅ Rotate first before moving
-        ai.RotateTowards(ai.player.transform.position);
-
-        // ✅ Move towards the player with proper chase speed
-        ai.MoveTowards(ai.player.transform.position, chaseSpeed);
-
-        // ✅ Only shoot if AI is mostly facing the player
-        Vector3 directionToPlayer = (ai.player.transform.position - ai.transform.position).normalized;
-        float dotProduct = Vector3.Dot(ai.transform.forward, directionToPlayer);
-
-        if (dotProduct > 0.9f) // AI is mostly aligned
+        if (ai.CanHearPlayer())
         {
-            if (Time.time >= ai.nextFireTime)
-            {
-                Debug.Log(ai.gameObject.name + " 🔫 AI Fires at Player!");
-                ai.FireProjectile();
-                ai.nextFireTime = Time.time + ai.fireRate; // Reset fire cooldown
-            }
+            Debug.Log(ai.gameObject.name + " 👂 HEARD the player! Reacting but KEEPING MOVEMENT.");
+            // AI can react, but should NOT stop movement
         }
+
+
+        ai.RotateTowards(ai.player.transform.position);
+        ai.MoveTowards(ai.player.transform.position);
     }
+
 
     public override void Exit()
     {

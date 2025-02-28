@@ -52,6 +52,32 @@ public abstract class AIController : Controller
         }
     }
 
+    protected override void Update()
+    {
+        base.Update();
+
+        if (currentState != null)
+        {
+            Debug.Log(gameObject.name + " 🔄 Running state: " + currentState.GetType().Name);
+            currentState.Execute(this);
+        }
+
+        // ✅ Check if AI hears the player and reacts accordingly
+        if (CanHearPlayer() && !(currentState is ChaseState))
+        {
+            Debug.Log(gameObject.name + " 👂 Heard the player! Switching to ChaseState!");
+            ChangeState(new ChaseState(this));
+        }
+
+        if (currentState is ChaseState && CanSeePlayer() && Time.time >= nextFireTime)
+        {
+            FireProjectile();
+            nextFireTime = Time.time + fireRate;
+        }
+    }
+
+
+
     // ✅ AI Can Move Check
     public bool CanMove()
     {
@@ -101,6 +127,32 @@ public abstract class AIController : Controller
         return false;
     }
 
+    private float lastHeardTime = -5f;
+    private float hearingCooldown = 2f;  // AI won’t react to the same sound again for 2 seconds
+
+    public virtual bool CanHearPlayer()
+    {
+        if (player == null) return false;
+
+        PlayerController playerController = player.GetComponent<PlayerController>();
+        if (playerController == null) return false;
+
+        float distance = Vector3.Distance(transform.position, player.transform.position);
+        bool isHearing = distance <= hearingRange && playerController.IsMakingNoise();
+
+        if (isHearing && Time.time > lastHeardTime + hearingCooldown)
+        {
+            lastHeardTime = Time.time;
+            Debug.Log(gameObject.name + " 👂 HEARD the player and is reacting!");
+            return true;
+        }
+
+        return false;
+    }
+
+
+
+
     // ✅ Optimized FireProjectile function
     public void FireProjectile()
     {
@@ -123,7 +175,19 @@ public abstract class AIController : Controller
         }
     }
 
-    public abstract void ChangeState(State newState);
+    public virtual void ChangeState(State newState)
+    {
+        if (currentState != null)
+        {
+            Debug.Log(gameObject.name + " 🔄 Exiting State: " + currentState.GetType().Name);
+            currentState.Exit();
+        }
+
+        currentState = newState;
+        Debug.Log(gameObject.name + " 🏁 Entering State: " + currentState.GetType().Name);
+        currentState.Enter();
+    }
+
 }
 
 

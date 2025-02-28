@@ -557,6 +557,7 @@ MonoBehaviour:
   acceleration: 5
   deceleration: 4
   maxSpeed: 10
+  rb: {fileID: 0}
 --- !u!114 &364265723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -574,11 +575,205 @@ MonoBehaviour:
   firePoint: {fileID: 1400453410}
   projectileSpeed: 20
   projectileDamage: 20
+  fireRate: 0.5
 --- !u!4 &364265726 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
   m_PrefabInstance: {fileID: 1652156279}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &447036892
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -20.58
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.07753071
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 6.82
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      propertyPath: m_Name
+      value: Enemy Tank 4
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1440124182}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 447036898}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 447036897}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 447036896}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 447036895}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 447036899}
+  m_SourcePrefab: {fileID: 100100000, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+--- !u!1 &447036893 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+  m_PrefabInstance: {fileID: 447036892}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &447036894 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
+  m_PrefabInstance: {fileID: 447036892}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &447036895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 447036893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74981de7a0a0ef24aa0f561492d08102, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  currentHealth: 100
+--- !u!114 &447036896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 447036893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c57614daa053e7489d0c61066f05719, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 10
+  rotateSpeed: 100
+  acceleration: 3
+  deceleration: 6
+  maxSpeed: 6
+  rb: {fileID: 447036898}
+--- !u!65 &447036897
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 447036893}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.1156175, y: 1.0275304, z: 1.5775304}
+  m_Center: {x: 0.0078087747, y: 0.48623472, z: 0.111234754}
+--- !u!54 &447036898
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 447036893}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 84
+  m_CollisionDetection: 1
+--- !u!114 &447036899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 447036893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad456b80e154f3347baa0a6e8d32ddda, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pawn: {fileID: 447036896}
+  detectionRange: 10
+  hearingRange: 20
+  fieldOfView: 360
+  inSightsFOV: 30
+  chaseSpeed: 6
+  fleeSpeed: 8
+  patrolSpeed: 4
+  projectilePrefab: {fileID: 283244802}
+  firePoint: {fileID: 1440124182}
+  projectileSpeed: 20
+  projectileDamage: 10
+  fireRate: 1.5
+  nextFireTime: 0
+  patrolPoints: []
+  ambushRange: 10
 --- !u!1 &491221289 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ef2c220fc8a00d24881116e99099a8da, type: 3}
@@ -600,19 +795,23 @@ MonoBehaviour:
   detectionRange: 5
   hearingRange: 5
   fieldOfView: 120
-  noiseSensitivity: 1
+  inSightsFOV: 30
+  chaseSpeed: 6
+  fleeSpeed: 8
+  patrolSpeed: 4
   projectilePrefab: {fileID: 283244802}
   firePoint: {fileID: 1087497659}
   projectileSpeed: 20
   projectileDamage: 10
   fireRate: 1.5
-  fleeDistance: 10
-  safeDistance: 15
+  nextFireTime: 0
   patrolPoints:
   - {fileID: 2096606548}
   - {fileID: 1955177242}
   - {fileID: 2071620027}
   - {fileID: 2122933673}
+  fleeDistance: 10
+  safeDistance: 15
 --- !u!114 &491221291
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -630,6 +829,7 @@ MonoBehaviour:
   acceleration: 2
   deceleration: 4
   maxSpeed: 6
+  rb: {fileID: 491221293}
 --- !u!65 &491221292
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1109,6 +1309,7 @@ MonoBehaviour:
   acceleration: 3
   deceleration: 6
   maxSpeed: 6
+  rb: {fileID: 865065985}
 --- !u!65 &865065984
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1173,14 +1374,16 @@ MonoBehaviour:
   detectionRange: 5
   hearingRange: 5
   fieldOfView: 120
-  noiseSensitivity: 1
+  inSightsFOV: 30
+  chaseSpeed: 2
+  fleeSpeed: 8
+  patrolSpeed: 2
   projectilePrefab: {fileID: 283244802}
   firePoint: {fileID: 1536706375}
   projectileSpeed: 20
   projectileDamage: 10
   fireRate: 1.5
-  chaseSpeed: 2
-  patrolSpeed: 2
+  nextFireTime: 0
   patrolPoints:
   - {fileID: 1955177242}
   - {fileID: 2122933673}
@@ -1701,6 +1904,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 364265726}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1440124181
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1440124182}
+  m_Layer: 0
+  m_Name: Enemy 4 Gun
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1440124182
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1440124181}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.081, y: 0.527, z: 0.925}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 447036894}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1487919622
 GameObject:
   m_ObjectHideFlags: 0
@@ -2117,6 +2351,7 @@ MonoBehaviour:
   acceleration: 3
   deceleration: 6
   maxSpeed: 6
+  rb: {fileID: 1696809294}
 --- !u!65 &1696809293
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2178,17 +2413,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pawn: {fileID: 1696809292}
-  detectionRange: 20
-  hearingRange: 15
+  detectionRange: 5
+  hearingRange: 10
   fieldOfView: 120
-  noiseSensitivity: 1
+  inSightsFOV: 30
+  chaseSpeed: 6
+  fleeSpeed: 8
+  patrolSpeed: 4
   projectilePrefab: {fileID: 283244802}
   firePoint: {fileID: 1908596911}
   projectileSpeed: 20
   projectileDamage: 10
   fireRate: 1.5
-  chaseSpeed: 6
-  patrolSpeed: 4
+  nextFireTime: 0
   patrolPoints:
   - {fileID: 1955177242}
   - {fileID: 2071620027}
@@ -2485,6 +2722,7 @@ SceneRoots:
   - {fileID: 111553203}
   - {fileID: 1652156279}
   - {fileID: 1696809289}
+  - {fileID: 447036892}
   - {fileID: 1239314696}
   - {fileID: 507379900}
   - {fileID: 1293611149}

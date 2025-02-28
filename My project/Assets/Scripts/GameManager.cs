@@ -22,27 +22,29 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Add back Tank Registration functions
+    // ✅ Tank Registration
     public void RegisterTank(TankPawn tank)
     {
-        if (!tankPawns.Contains(tank))
+        if (tank != null && !tankPawns.Contains(tank))
         {
             tankPawns.Add(tank);
+            Debug.Log("✅ GameManager: Registered Tank -> " + tank.gameObject.name);
         }
     }
 
     public void UnregisterTank(TankPawn tank)
     {
-        if (tankPawns.Contains(tank))
+        if (tank != null && tankPawns.Contains(tank))
         {
             tankPawns.Remove(tank);
+            Debug.Log("❌ GameManager: Unregistered Tank -> " + tank.gameObject.name);
         }
     }
 
-    // ✅ Register and Unregister AI
+    // ✅ AI Registration
     public void RegisterAI(AIController ai)
     {
-        if (!aiControllers.Contains(ai))
+        if (ai != null && !aiControllers.Contains(ai))
         {
             aiControllers.Add(ai);
             Debug.Log("✅ GameManager: AI Registered -> " + ai.gameObject.name);
@@ -51,50 +53,56 @@ public class GameManager : MonoBehaviour
 
     public void UnregisterAI(AIController ai)
     {
-        if (aiControllers.Contains(ai))
+        if (ai != null && aiControllers.Contains(ai))
         {
             aiControllers.Remove(ai);
             Debug.Log("❌ GameManager: AI Unregistered -> " + ai.gameObject.name);
         }
     }
 
-    // ✅ Get the player (Ensures PlayerController is available)
+    // ✅ Get the Player (Ensures PlayerController is available)
     public PlayerController GetPlayer()
     {
-        if (playerControllers.Count > 0)
+        if (playerControllers.Count > 0 && playerControllers[0] != null)
         {
             Debug.Log("✅ GameManager: Returning Player -> " + playerControllers[0].gameObject.name);
             return playerControllers[0];
         }
-        Debug.LogError("❌ GameManager: No player found!");
+        Debug.LogError("❌ GameManager: No valid player found!");
         return null;
     }
 
-    // ✅ Register and Unregister Player
+    // ✅ Player Registration
     public void RegisterPlayer(PlayerController player)
     {
-        if (!playerControllers.Contains(player))
+        if (player != null && !playerControllers.Contains(player))
         {
             playerControllers.Add(player);
+            Debug.Log("✅ GameManager: Registered Player -> " + player.gameObject.name);
         }
     }
 
     public void UnregisterPlayer(PlayerController player)
     {
-        if (playerControllers.Contains(player))
+        if (player != null && playerControllers.Contains(player))
         {
             playerControllers.Remove(player);
+            Debug.Log("❌ GameManager: Unregistered Player -> " + player.gameObject.name);
         }
     }
 
-    // ✅ Helper Function: Get Nearest AI to a Position
+    // ✅ Get Nearest AI to a Position
     public AIController GetNearestAI(Vector3 position)
     {
+        if (aiControllers.Count == 0) return null;
+
         AIController nearestAI = null;
         float minDistance = Mathf.Infinity;
 
         foreach (AIController ai in aiControllers)
         {
+            if (ai == null) continue; // Skip null AI
+
             float distance = Vector3.Distance(position, ai.transform.position);
             if (distance < minDistance)
             {
@@ -107,14 +115,18 @@ public class GameManager : MonoBehaviour
         return nearestAI;
     }
 
-    // ✅ Helper Function: Get AI with Highest Health
+    // ✅ Get AI with Highest Health
     public AIController GetStrongestAI()
     {
+        if (aiControllers.Count == 0) return null;
+
         AIController strongestAI = null;
         float highestHealth = 0f;
 
         foreach (AIController ai in aiControllers)
         {
+            if (ai == null) continue; // Skip null AI
+
             Health aiHealth = ai.GetComponent<Health>();
             if (aiHealth != null && aiHealth.currentHealth > highestHealth)
             {
@@ -127,14 +139,14 @@ public class GameManager : MonoBehaviour
         return strongestAI;
     }
 
-    // ✅ Helper Function: Get All AI in Chase Mode
+    // ✅ Get All AI in Chase Mode
     public List<AIController> GetAllChasingAI()
     {
         List<AIController> chasingAI = new List<AIController>();
 
         foreach (AIController ai in aiControllers)
         {
-            if (ai is AIPatrolChase patrolAI && patrolAI.currentState is ChaseState)
+            if (ai != null && ai.currentState is ChaseState) // ✅ Works for all AI types
             {
                 chasingAI.Add(ai);
             }
@@ -144,6 +156,7 @@ public class GameManager : MonoBehaviour
         return chasingAI;
     }
 }
+
 
 
 

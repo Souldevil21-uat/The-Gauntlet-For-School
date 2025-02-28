@@ -45,7 +45,8 @@ public class AIChase : AIController
     public override void ChangeState(State newState)
     {
         if (currentState != null) currentState.Exit();
-        base.ChangeState(newState); // ✅ Calls base to ensure proper transitions
+        ChangeState(newState);
+
     }
 }
 

@@ -34,6 +34,20 @@ public class AIFlee : AIController
         }
     }
 
+    public void RestartPatrol()
+    {
+        if (patrolPoints == null || patrolPoints.Count == 0)
+        {
+            Debug.LogWarning(gameObject.name + " ❗ Cannot restart patrol - no patrol points!");
+            return;
+        }
+
+        currentPatrolIndex = 0; // Reset patrol index
+        ChangeState(new PatrolState(this)); // Return to patrol state
+        Debug.Log(gameObject.name + " 🔄 Restarting patrol from the beginning.");
+    }
+
+
     public override bool CanSeePlayer()
     {
         if (player == null)
