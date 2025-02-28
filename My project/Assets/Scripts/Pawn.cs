@@ -13,6 +13,14 @@ public class Pawn : MonoBehaviour
         rb = GetComponent<Rigidbody>(); // Get Rigidbody component
     }
 
+    public void RotateTowards(Vector3 targetPosition)
+    {
+        Vector3 direction = (targetPosition - transform.position).normalized;
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        rb.MoveRotation(Quaternion.RotateTowards(rb.rotation, targetRotation, rotateSpeed * Time.deltaTime));
+    }
+
+
     public virtual void Move(float input)
     {
         Debug.Log("Move() called in base Pawn class.");

@@ -11,6 +11,6 @@ public class Controller : MonoBehaviour
 
     protected virtual void Update()
     {
-        Debug.Log("Controller Update() running.");
+        
     }
 }

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class TankPawn : Pawn
 {
@@ -8,10 +8,16 @@ public class TankPawn : Pawn
     [SerializeField] private float maxSpeed = 10f;     // Maximum movement speed
 
     private float currentSpeed = 0f; // Tracks current movement speed
+    private Rigidbody rb; // ✅ Added Rigidbody reference
 
     protected override void Start()
     {
         base.Start();
+        rb = GetComponent<Rigidbody>(); // ✅ Ensure Rigidbody is assigned
+        if (rb == null)
+        {
+            Debug.LogError(gameObject.name + " ❌ ERROR: Rigidbody is missing on TankPawn!");
+        }
         GameManager.Instance.RegisterTank(this);
     }
 
@@ -25,6 +31,12 @@ public class TankPawn : Pawn
 
     public override void Move(float input)
     {
+        if (rb == null)
+        {
+            Debug.LogWarning(gameObject.name + " ❌ Cannot move: Rigidbody is null!");
+            return;
+        }
+
         if (input != 0)
         {
             // Apply acceleration based on input direction
@@ -55,10 +67,18 @@ public class TankPawn : Pawn
 
     public override void Rotate(float input)
     {
+        if (rb == null)
+        {
+            Debug.LogWarning(gameObject.name + " ❌ Cannot rotate: Rigidbody is null!");
+            return;
+        }
+
         if (input != 0)
         {
-            Quaternion turnRotation = Quaternion.Euler(0f, input * rotateSpeed * Time.deltaTime, 0f);
+            float rotationAmount = input * rotateSpeed * Time.deltaTime;
+            Quaternion turnRotation = Quaternion.Euler(0f, rotationAmount, 0f);
             rb.MoveRotation(rb.rotation * turnRotation);
         }
     }
 }
+
