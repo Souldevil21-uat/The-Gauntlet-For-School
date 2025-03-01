@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
-using System; // ✅ Needed for Action events
+using System; // Needed for Action events
 
 public class Health : MonoBehaviour
 {
     public float maxHealth = 100f;
     public float currentHealth;
 
-    // ✅ Event for when this object dies
+    // Event triggered when the object dies
     public event Action OnDeath;
 
     void Start()
@@ -14,25 +14,22 @@ public class Health : MonoBehaviour
         ResetHealth();
     }
 
-    // ✅ New function to reset health (useful for respawning mechanics)
+    // Resets health to maximum (useful for respawning mechanics)
     public void ResetHealth()
     {
         currentHealth = maxHealth;
-        Debug.Log(gameObject.name + " 🔄 Health reset to " + maxHealth);
     }
 
-    // ✅ TakeDamage with optional damage source
+    // Handles taking damage, with an optional damage source
     public void TakeDamage(float damage, GameObject damageSource = null)
     {
         if (currentHealth <= 0)
         {
-            Debug.LogWarning(gameObject.name + " ❌ Already dead, ignoring damage.");
-            return;
+            return; // Prevents applying damage to an already destroyed object
         }
 
         currentHealth -= damage;
-        currentHealth = Mathf.Max(currentHealth, 0); // ✅ Prevents negative health
-        Debug.Log(gameObject.name + " took " + damage + " damage! Current Health: " + currentHealth);
+        currentHealth = Mathf.Max(currentHealth, 0); // Ensures health doesn't go negative
 
         if (currentHealth <= 0)
         {
@@ -40,16 +37,16 @@ public class Health : MonoBehaviour
         }
     }
 
+    // Handles object destruction when health reaches zero
     private void Die()
     {
-        Debug.Log(gameObject.name + " 💀 has been destroyed!");
-
-        // ✅ Trigger any death-related events before destruction
+        // Trigger any death-related events before destruction
         OnDeath?.Invoke();
 
-        // ✅ Optional: Replace with a deactivation system instead of immediate destruction
+        // Optional: Replace with a deactivation system instead of immediate destruction
         Destroy(gameObject);
     }
 }
+
 
 

@@ -3,14 +3,16 @@
 public class Projectile : MonoBehaviour
 {
     [Header("Projectile Settings")]
-    public float speed = 20f;
-    public float damage = 10f;
-    public float lifespan = 2f;
-    private Rigidbody rb;
-    private GameObject owner;
-    private PlayerController ownerController;
-    private bool hasHit = false; // ✅ Prevent multiple hits
+    public float speed = 20f;     // Speed of the projectile
+    public float damage = 10f;    // Damage dealt upon impact
+    public float lifespan = 2f;   // Time before the projectile is destroyed
 
+    private Rigidbody rb;         // Rigidbody component for movement
+    private GameObject owner;     // The shooter that fired this projectile
+    private PlayerController ownerController;
+    private bool hasHit = false;  // Prevents multiple hits
+
+    /// Initializes the projectile with speed, damage, and owner.
     public void Initialize(GameObject shooter, float projectileSpeed, float projectileDamage)
     {
         owner = shooter;
@@ -20,18 +22,18 @@ public class Projectile : MonoBehaviour
 
         ownerController = shooter.GetComponent<PlayerController>();
 
+        // Destroy projectile if Rigidbody is missing
         if (rb == null)
         {
-            Debug.LogError("❌ ERROR: Rigidbody missing on projectile!");
-            Destroy(gameObject); // ✅ Destroy projectile if it has no Rigidbody
+            Debug.LogError("ERROR: Rigidbody missing on projectile!");
+            Destroy(gameObject);
             return;
         }
 
-        // ✅ Ensure the projectile always moves forward
+        // Set projectile velocity to move forward
         rb.linearVelocity = transform.forward * speed;
-        Debug.Log("✅ Projectile launched with Speed: " + speed);
 
-        // ✅ Ignore collision with the owner to prevent self-hits
+        // Prevent self-collision
         Collider projectileCollider = GetComponent<Collider>();
         Collider ownerCollider = owner?.GetComponent<Collider>();
         if (projectileCollider != null && ownerCollider != null)
@@ -39,43 +41,40 @@ public class Projectile : MonoBehaviour
             Physics.IgnoreCollision(projectileCollider, ownerCollider);
         }
 
-        // ✅ Destroy after lifespan to avoid clutter
+        // Destroy projectile after its lifespan expires
         Destroy(gameObject, lifespan);
     }
 
+    /// Handles collision with other objects.
     private void OnTriggerEnter(Collider other)
     {
-        if (hasHit) return; // ✅ Prevent multiple hits
+        if (hasHit) return; // Prevent multiple collisions
 
-        Debug.Log("🚨 Projectile collided with: " + other.gameObject.name);
+        // Ignore self-collision
+        if (other.gameObject == owner) return;
 
-        if (other.gameObject == owner)
-        {
-            Debug.Log("❌ Projectile hit its owner, ignoring...");
-            return; // ✅ Ignore self-collisions
-        }
-
+        // Check if the object has a health component and apply damage
         Health targetHealth = other.GetComponent<Health>();
         if (targetHealth != null)
         {
             targetHealth.TakeDamage(damage);
-            Debug.Log("💥 " + other.gameObject.name + " took " + damage + " damage! Current Health: " + targetHealth.currentHealth);
         }
 
-        hasHit = true; // ✅ Mark the projectile as having hit something
+        hasHit = true;
         DestroyProjectile();
     }
 
+    /// Handles projectile destruction and notifies the shooter.
     private void DestroyProjectile()
     {
-        Debug.Log("🗑 Projectile destroyed!");
         if (ownerController != null)
         {
-            ownerController.OnProjectileDestroyed(); // ✅ Notify the player they can shoot again
+            ownerController.OnProjectileDestroyed();
         }
         Destroy(gameObject);
     }
 }
+
 
 
 

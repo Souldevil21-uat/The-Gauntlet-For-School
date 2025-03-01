@@ -7,7 +7,7 @@ public abstract class AIController : Controller
     [SerializeField] public float detectionRange = 20f;
     [SerializeField] public float hearingRange = 15f;
     [SerializeField] public float fieldOfView = 120f;
-    [SerializeField] public float inSightsFOV = 30f; // 🔹 More aggressive vision when directly in front
+    [SerializeField] public float inSightsFOV = 30f; // More aggressive vision when directly in front
 
     [Header("AI Behavior Settings")]
     [SerializeField] public float chaseSpeed = 6f;
@@ -34,21 +34,10 @@ public abstract class AIController : Controller
         GameManager.Instance.RegisterAI(this);
         player = GameManager.Instance.GetPlayer()?.gameObject;
 
-        Debug.Log(gameObject.name + " 🟢 AI Variables Assigned - " +
-                  "Hearing: " + hearingRange +
-                  ", FOV: " + fieldOfView +
-                  ", Chase Speed: " + chaseSpeed +
-                  ", Flee Speed: " + fleeSpeed);
-
-        // ✅ Start in PatrolState if patrol points exist, else idle
+        // Start in PatrolState if patrol points exist, else remain idle
         if (patrolPoints != null && patrolPoints.Count > 0)
         {
-            Debug.Log(gameObject.name + " 🟢 Starting in PatrolState.");
             ChangeState(new PatrolState(this));
-        }
-        else
-        {
-            Debug.LogWarning(gameObject.name + " ❗ No patrol points assigned. AI will stay idle.");
         }
     }
 
@@ -58,25 +47,23 @@ public abstract class AIController : Controller
 
         if (currentState != null)
         {
-            Debug.Log(gameObject.name + " 🔄 Running state: " + currentState.GetType().Name);
             currentState.Execute(this);
         }
 
-        // ✅ FIX: AI Flee Tanks Should Not Enter ChaseState
+        // AI reacts to hearing the player
         if (CanHearPlayer())
         {
             if (this is AIFlee && !(currentState is FleeState))
             {
-                Debug.Log(gameObject.name + " 🚨 Heard the player! **Entering FleeState!**");
-                ChangeState(new FleeState(this));
+                ChangeState(new FleeState(this)); // Flee AI enters FleeState
             }
-            else if (!(this is AIFlee) && !(currentState is ChaseState)) // ✅ Other AI enters ChaseState
+            else if (!(this is AIFlee) && !(currentState is ChaseState))
             {
-                Debug.Log(gameObject.name + " 👂 Heard the player! **Entering ChaseState!**");
-                ChangeState(new ChaseState(this));
+                ChangeState(new ChaseState(this)); // Other AI enters ChaseState
             }
         }
 
+        // AI fires projectiles when it sees the player
         if (currentState is ChaseState && CanSeePlayer() && Time.time >= nextFireTime)
         {
             FireProjectile();
@@ -84,13 +71,13 @@ public abstract class AIController : Controller
         }
     }
 
-    // ✅ AI Can Move Check
+    // Checks if AI can move
     public bool CanMove()
     {
         return pawn != null && currentState != null;
     }
 
-    // ✅ Improved MoveTowards function
+    // Moves the AI toward a target position
     public void MoveTowards(Vector3 targetPosition, float speed = 4f)
     {
         if (!CanMove()) return;
@@ -100,7 +87,7 @@ public abstract class AIController : Controller
         RotateTowards(targetPosition);
     }
 
-    // ✅ Improved RotateTowards function
+    // Rotates the AI toward a target position
     public void RotateTowards(Vector3 targetPosition)
     {
         if (!CanMove()) return;
@@ -110,14 +97,10 @@ public abstract class AIController : Controller
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 180f * Time.deltaTime);
     }
 
-    // ✅ Optimized CanSeePlayer function
+    // Checks if the AI can see the player
     public virtual bool CanSeePlayer()
     {
-        if (player == null)
-        {
-            Debug.LogWarning(gameObject.name + " ❗ Cannot see player: Player is null.");
-            return false;
-        }
+        if (player == null) return false;
 
         Vector3 directionToPlayer = (player.transform.position - transform.position).normalized;
         float angleToPlayer = Vector3.Angle(transform.forward, directionToPlayer);
@@ -134,8 +117,9 @@ public abstract class AIController : Controller
     }
 
     private float lastHeardTime = -5f;
-    private float hearingCooldown = 2f;  // AI won’t react to the same sound again for 2 seconds
+    private float hearingCooldown = 2f;  // AI won't react to the same sound again for 2 seconds
 
+    // Checks if the AI can hear the player
     public virtual bool CanHearPlayer()
     {
         if (player == null) return false;
@@ -149,21 +133,16 @@ public abstract class AIController : Controller
         if (isHearing && Time.time > lastHeardTime + hearingCooldown)
         {
             lastHeardTime = Time.time;
-            Debug.Log(gameObject.name + " 👂 HEARD the player and is reacting!");
             return true;
         }
 
         return false;
     }
 
-    // ✅ Optimized FireProjectile function
+    // Fires a projectile from the AI's fire point
     public void FireProjectile()
     {
-        if (projectilePrefab == null || firePoint == null)
-        {
-            Debug.LogError(gameObject.name + " ❌ ERROR: Missing Projectile Prefab or FirePoint!");
-            return;
-        }
+        if (projectilePrefab == null || firePoint == null) return;
 
         GameObject newProjectile = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
         Projectile projectileScript = newProjectile.GetComponent<Projectile>();
@@ -172,25 +151,21 @@ public abstract class AIController : Controller
         {
             projectileScript.Initialize(gameObject, projectileSpeed, projectileDamage);
         }
-        else
-        {
-            Debug.LogError(gameObject.name + " ❌ ERROR: Projectile script missing!");
-        }
     }
 
+    // Handles state transitions for AI
     public virtual void ChangeState(State newState)
     {
         if (currentState != null)
         {
-            Debug.Log(gameObject.name + " 🔄 Exiting State: " + currentState.GetType().Name);
             currentState.Exit();
         }
 
         currentState = newState;
-        Debug.Log(gameObject.name + " 🏁 Entering State: " + currentState.GetType().Name);
         currentState.Enter();
     }
 }
+
 
 
 

@@ -2,20 +2,25 @@ using UnityEngine;
 
 public class TankMovement : MonoBehaviour
 {
-    public float moveSpeed = 10f; // Speed of forward and backward movement
-    public float turnSpeed = 50f; // Speed of turning left and right
+    [Header("Tank Movement Settings")]
+    public float moveSpeed = 10f; // Speed for forward and backward movement
+    public float turnSpeed = 50f; // Speed for left and right rotation
+
     private Rigidbody rb; // Reference to the tank's Rigidbody component
 
     void Start()
     {
-        rb = GetComponent<Rigidbody>(); // Get the Rigidbody component attached to the tank
+        // Get the Rigidbody component attached to the tank
+        rb = GetComponent<Rigidbody>();
     }
 
     void FixedUpdate()
     {
-        // Get input from the keyboard
-        float moveInput = Input.GetAxis("Vertical"); // W/S or Up/Down Arrow keys
-        float turnInput = Input.GetAxis("Horizontal"); // A/D or Left/Right Arrow keys
+        // Get movement input from the player (W/S or Up/Down Arrow keys)
+        float moveInput = Input.GetAxis("Vertical");
+
+        // Get rotation input from the player (A/D or Left/Right Arrow keys)
+        float turnInput = Input.GetAxis("Horizontal");
 
         // Move the tank forward or backward
         Vector3 moveDirection = transform.forward * moveInput * moveSpeed * Time.fixedDeltaTime;

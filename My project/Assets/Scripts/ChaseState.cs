@@ -6,45 +6,46 @@ public class ChaseState : State
 
     public ChaseState(AIController ai) : base(ai)
     {
-        this.chaseSpeed = ai.chaseSpeed; // ✅ Ensure AI uses correct chase speed
+        this.chaseSpeed = ai.chaseSpeed; // Ensures AI uses correct chase speed
     }
 
+    // Called when the AI enters the chase state
     public override void Enter()
     {
-        Debug.Log(aiController.gameObject.name + " 🚨 Entered ChaseState!");
+        // AI is now actively pursuing the player
     }
 
+    // Continuously executes while AI is in the chase state
     public override void Execute(AIController ai)
     {
-        Debug.Log(ai.gameObject.name + " 🔄 Running ChaseState...");
-
-        // ✅ If AI NO LONGER SEES the player, return to patrol
+        // If AI loses sight of the player, determine the next action
         if (!ai.CanSeePlayer())
         {
-            // ✅ AI should ONLY use hearing if it **loses sight**
+            // If AI can still hear the player, maintain movement but adjust its reaction
             if (ai.CanHearPlayer())
             {
-                Debug.Log(ai.gameObject.name + " 👂 HEARD the player! Keeping movement but adjusting reaction.");
-                return; // ✅ AI will continue chasing using hearing, but doesn’t stop
+                return; // AI will continue chasing based on hearing, but without stopping
             }
 
-            Debug.Log(ai.gameObject.name + " ❌ Lost sight of player. Returning to patrol.");
+            // If the player is neither seen nor heard, return to patrol
             ai.ChangeState(new PatrolState(ai));
             return;
         }
 
-        // ✅ Ensure AI ROTATES towards player before moving
+        // Ensure AI rotates towards the player before moving
         ai.RotateTowards(ai.player.transform.position);
 
-        // ✅ Ensure AI MOVES at the correct chase speed
+        // Ensure AI moves at the designated chase speed
         ai.MoveTowards(ai.player.transform.position, chaseSpeed);
     }
 
+    // Called when the AI exits the chase state
     public override void Exit()
     {
-        Debug.Log(aiController.gameObject.name + " 🛑 Exiting ChaseState.");
+        // No additional exit behavior required
     }
 }
+
 
 
 

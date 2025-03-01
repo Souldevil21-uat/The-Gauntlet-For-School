@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        // Singleton pattern to ensure only one GameManager exists
         if (Instance == null)
         {
             Instance = this;
@@ -22,76 +23,71 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Tank Registration
+    // Registers a tank and ensures no duplicates
     public void RegisterTank(TankPawn tank)
     {
         if (tank != null && !tankPawns.Contains(tank))
         {
             tankPawns.Add(tank);
-            Debug.Log("✅ GameManager: Registered Tank -> " + tank.gameObject.name);
         }
     }
 
+    // Unregisters a tank
     public void UnregisterTank(TankPawn tank)
     {
         if (tank != null && tankPawns.Contains(tank))
         {
             tankPawns.Remove(tank);
-            Debug.Log("❌ GameManager: Unregistered Tank -> " + tank.gameObject.name);
         }
     }
 
-    // ✅ AI Registration
+    // Registers an AI and ensures no duplicates
     public void RegisterAI(AIController ai)
     {
         if (ai != null && !aiControllers.Contains(ai))
         {
             aiControllers.Add(ai);
-            Debug.Log("✅ GameManager: AI Registered -> " + ai.gameObject.name);
         }
     }
 
+    // Unregisters an AI
     public void UnregisterAI(AIController ai)
     {
         if (ai != null && aiControllers.Contains(ai))
         {
             aiControllers.Remove(ai);
-            Debug.Log("❌ GameManager: AI Unregistered -> " + ai.gameObject.name);
         }
     }
 
-    // ✅ Get the Player (Ensures PlayerController is available)
+    // Returns the first registered player controller
     public PlayerController GetPlayer()
     {
         if (playerControllers.Count > 0 && playerControllers[0] != null)
         {
-            Debug.Log("✅ GameManager: Returning Player -> " + playerControllers[0].gameObject.name);
             return playerControllers[0];
         }
-        Debug.LogError("❌ GameManager: No valid player found!");
         return null;
     }
 
-    // ✅ Player Registration
+    // Registers a player controller
     public void RegisterPlayer(PlayerController player)
     {
         if (player != null && !playerControllers.Contains(player))
         {
             playerControllers.Add(player);
-            Debug.Log("✅ GameManager: Registered Player -> " + player.gameObject.name);
         }
     }
 
+    // Unregisters a player controller
     public void UnregisterPlayer(PlayerController player)
     {
         if (player != null && playerControllers.Contains(player))
         {
             playerControllers.Remove(player);
-            Debug.Log("❌ GameManager: Unregistered Player -> " + player.gameObject.name);
         }
     }
 
-    // ✅ Get Nearest AI to a Position
+    // Returns the AI controller closest to a given position
     public AIController GetNearestAI(Vector3 position)
     {
         if (aiControllers.Count == 0) return null;
@@ -101,7 +97,7 @@ public class GameManager : MonoBehaviour
 
         foreach (AIController ai in aiControllers)
         {
-            if (ai == null) continue; // Skip null AI
+            if (ai == null) continue;
 
             float distance = Vector3.Distance(position, ai.transform.position);
             if (distance < minDistance)
@@ -110,12 +106,10 @@ public class GameManager : MonoBehaviour
                 nearestAI = ai;
             }
         }
-
-        Debug.Log("🔍 Nearest AI Found: " + (nearestAI != null ? nearestAI.gameObject.name : "None"));
         return nearestAI;
     }
 
-    // ✅ Get AI with Highest Health
+    // Returns the AI controller with the highest health
     public AIController GetStrongestAI()
     {
         if (aiControllers.Count == 0) return null;
@@ -125,7 +119,7 @@ public class GameManager : MonoBehaviour
 
         foreach (AIController ai in aiControllers)
         {
-            if (ai == null) continue; // Skip null AI
+            if (ai == null) continue;
 
             Health aiHealth = ai.GetComponent<Health>();
             if (aiHealth != null && aiHealth.currentHealth > highestHealth)
@@ -134,28 +128,25 @@ public class GameManager : MonoBehaviour
                 strongestAI = ai;
             }
         }
-
-        Debug.Log("💪 Strongest AI Found: " + (strongestAI != null ? strongestAI.gameObject.name : "None"));
         return strongestAI;
     }
 
-    // ✅ Get All AI in Chase Mode
+    // Returns a list of AI controllers that are currently in ChaseState
     public List<AIController> GetAllChasingAI()
     {
         List<AIController> chasingAI = new List<AIController>();
 
         foreach (AIController ai in aiControllers)
         {
-            if (ai != null && ai.currentState is ChaseState) // ✅ Works for all AI types
+            if (ai != null && ai.currentState is ChaseState)
             {
                 chasingAI.Add(ai);
             }
         }
-
-        Debug.Log("🚨 AI in ChaseState: " + chasingAI.Count);
         return chasingAI;
     }
 }
+
 
 
 

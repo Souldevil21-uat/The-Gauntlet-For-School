@@ -3,18 +3,18 @@
 public class PlayerController : Controller
 {
     [Header("Shooting Settings")]
-    public GameObject projectilePrefab;
-    public Transform firePoint;
-    public float projectileSpeed = 20f;
-    public float projectileDamage = 10f;
-    public float fireRate = 0.5f; // ✅ Prevents shooting too fast
-    private float nextFireTime = 0f;
-    private GameObject activeProjectile = null;
-    private bool canShoot = true; // ✅ Easily toggle shooting
+    public GameObject projectilePrefab; // Prefab for the projectile
+    public Transform firePoint;         // Fire point location
+    public float projectileSpeed = 20f; // Speed of the projectile
+    public float projectileDamage = 10f; // Damage per shot
+    public float fireRate = 0.5f;       // Cooldown time between shots
+    private float nextFireTime = 0f;    // Time when the next shot is allowed
+    private GameObject activeProjectile = null; // Tracks the currently active projectile
+    private bool canShoot = true;       // Flag to enable/disable shooting
 
     [Header("Movement Tracking")]
-    public bool isMoving { get; private set; }
-    public bool isShooting { get; private set; }
+    public bool isMoving { get; private set; }  // Tracks if the player is moving
+    public bool isShooting { get; private set; } // Tracks if the player is shooting
 
     protected override void Update()
     {
@@ -22,13 +22,13 @@ public class PlayerController : Controller
         HandleMovement();
         HandleShooting();
     }
-
+    /// Handles player movement input and updates pawn movement.
     private void HandleMovement()
     {
-        float moveInput = Input.GetAxis("Vertical");
-        float rotateInput = Input.GetAxis("Horizontal");
+        float moveInput = Input.GetAxis("Vertical"); // Forward/backward movement
+        float rotateInput = Input.GetAxis("Horizontal"); // Left/right rotation
 
-        isMoving = moveInput != 0 || rotateInput != 0;
+        isMoving = moveInput != 0 || rotateInput != 0; // Updates movement status
 
         if (pawn != null)
         {
@@ -36,29 +36,24 @@ public class PlayerController : Controller
             pawn.Rotate(rotateInput);
         }
     }
-
+    /// Handles shooting input and triggers projectile firing.
     private void HandleShooting()
     {
-        if (!canShoot) return; // ✅ Prevents shooting when disabled
+        if (!canShoot) return; // Prevents shooting if disabled
 
         if (Input.GetKeyDown(KeyCode.Space) && activeProjectile == null && Time.time >= nextFireTime)
         {
             FireProjectile();
-            nextFireTime = Time.time + fireRate; // ✅ Ensures fire delay is respected
+            nextFireTime = Time.time + fireRate; // Enforces fire rate cooldown
         }
     }
 
+    /// Instantiates and fires a projectile.
     private void FireProjectile()
     {
-        if (projectilePrefab == null)
+        if (projectilePrefab == null || firePoint == null)
         {
-            Debug.LogError("❌ ERROR: No projectile prefab assigned!");
-            return;
-        }
-
-        if (firePoint == null)
-        {
-            Debug.LogError("❌ ERROR: No firePoint assigned!");
+            Debug.LogError("ERROR: Missing projectile prefab or fire point!");
             return;
         }
 
@@ -67,41 +62,34 @@ public class PlayerController : Controller
 
         if (projectileScript != null)
         {
-            activeProjectile = newProjectile; // ✅ Tracks the active projectile
-
-            // ✅ Ensure the projectile gets initialized properly
+            activeProjectile = newProjectile; // Tracks active projectile
             projectileScript.Initialize(gameObject, projectileSpeed, projectileDamage);
-            Debug.Log("🎯 Fired projectile with Speed: " + projectileSpeed);
         }
         else
         {
-            Debug.LogError("❌ ERROR: Projectile script missing!");
+            Debug.LogError("ERROR: Projectile script missing!");
         }
     }
 
+    /// Called when the active projectile is destroyed, allowing the player to fire again.
     public void OnProjectileDestroyed()
     {
-        Debug.Log("🔄 Projectile destroyed. Player can fire again.");
-        activeProjectile = null; // ✅ Ensures player can shoot again
+        activeProjectile = null;
     }
 
+    /// Enables or disables the ability to shoot.
     public void EnableShooting(bool enable)
     {
         canShoot = enable;
-        Debug.Log("🔫 Shooting " + (enable ? "ENABLED" : "DISABLED"));
     }
 
-    private void ResetShootingNoise()
-    {
-        isShooting = false;
-    }
-
+    /// Checks if the player is making noise (moving or shooting).
     public bool IsMakingNoise()
     {
         return isMoving || isShooting;
     }
-
 }
+
 
 
 

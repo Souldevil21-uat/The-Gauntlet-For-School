@@ -8,32 +8,33 @@ public class AIAmbush : AIController
     protected override void Start()
     {
         base.Start();
-        ChangeState(new AmbushState(this)); // Start in Ambush mode
+        ChangeState(new AmbushState(this)); // AI starts in Ambush mode
     }
 
+    // Checks if the player is within ambush range and visible
     public override bool CanSeePlayer()
     {
         if (player == null) return false;
 
         float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
 
-        if (distanceToPlayer < ambushRange) // ✅ Only detect player at close range
+        // Only detect player within the ambush range
+        if (distanceToPlayer < ambushRange)
         {
-            return base.CanSeePlayer(); // Use normal vision checks
+            return base.CanSeePlayer(); // Uses the AI's normal vision system
         }
         return false;
     }
 
+    // Prevents the Ambush AI from switching to ChaseState
     public override void ChangeState(State newState)
     {
         if (newState is ChaseState)
         {
-            Debug.LogWarning(gameObject.name + " ❌ AIAmbush should NEVER enter ChaseState!");
-            return; // Prevents accidental transition
+            return; // Ensures that Ambush AI does not chase the player
         }
 
         base.ChangeState(newState);
     }
-
 }
 
