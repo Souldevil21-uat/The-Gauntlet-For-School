@@ -16,25 +16,29 @@ public class FleeState : State
     {
         Debug.Log(ai.gameObject.name + " 🔄 Running Execute() in FleeState!");
 
+        if (ai.player == null)
+        {
+            Debug.LogWarning(ai.gameObject.name + " ❗ No player detected. Returning to patrol.");
+            ai.ChangeState(new PatrolState(ai));
+            return;
+        }
+
         float distanceToPlayer = Vector3.Distance(ai.transform.position, ai.player.transform.position);
 
-        // ✅ If AI is far enough, return to patrol
-        if (distanceToPlayer > safeThreshold)
+        // ✅ AI will stop fleeing if it's far enough
+        if (distanceToPlayer >= safeThreshold)
         {
             Debug.Log(ai.gameObject.name + " ✅ Safe distance reached. Returning to patrol.");
             ai.ChangeState(new PatrolState(ai));
             return;
         }
 
-        // ✅ AI should flee in the opposite direction
+        // ✅ AI should flee AWAY from the player
         Vector3 fleeDirection = (ai.transform.position - ai.player.transform.position).normalized;
-        Vector3 fleeTarget = ai.transform.position + fleeDirection * 10f;
+        Vector3 safePoint = ai.transform.position + fleeDirection * 10f;  // ✅ Moves further away
 
-        // ✅ Ensure AI rotates first before moving
-        ai.RotateTowards(fleeTarget);
-
-        // ✅ Use flee speed instead of default move speed
-        ai.pawn.Move(fleeSpeed);
+        ai.RotateTowards(safePoint); // ✅ Rotate first before moving
+        ai.MoveTowards(safePoint, ai.fleeSpeed);
     }
 
     public override void Exit()
@@ -42,6 +46,7 @@ public class FleeState : State
         Debug.Log(aiController.gameObject.name + " 🛑 Exiting FleeState.");
     }
 }
+
 
 
 

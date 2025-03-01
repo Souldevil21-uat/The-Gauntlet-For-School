@@ -9,6 +9,7 @@ public class AIFlee : AIController
 
     [Header("Patrol Settings")]
     private int currentPatrolIndex = 0;
+    private bool isFleeing = false; // ✅ Track whether AI is currently fleeing
 
     protected override void Start()
     {
@@ -23,7 +24,7 @@ public class AIFlee : AIController
             Debug.Log(gameObject.name + " ✅ Patrol points loaded: " + patrolPoints.Count);
         }
 
-        // ✅ Ensure AI always starts in PatrolState
+        // ✅ Ensure AI starts in PatrolState if patrol points exist
         if (patrolPoints != null && patrolPoints.Count > 0)
         {
             ChangeState(new PatrolState(this));
@@ -36,17 +37,16 @@ public class AIFlee : AIController
 
     public void RestartPatrol()
     {
-        if (patrolPoints == null || patrolPoints.Count == 0)
+        if (currentState is PatrolState)
         {
-            Debug.LogWarning(gameObject.name + " ❗ Cannot restart patrol - no patrol points!");
-            return;
+            Debug.Log(gameObject.name + " 🔄 Already in PatrolState, no need to restart.");
+            return; // ✅ Prevents infinite loop
         }
 
-        currentPatrolIndex = 0; // Reset patrol index
-        ChangeState(new PatrolState(this)); // Return to patrol state
-        Debug.Log(gameObject.name + " 🔄 Restarting patrol from the beginning.");
+        Debug.Log(gameObject.name + " 🔄 Restarting patrol...");
+        isFleeing = false; // ✅ Reset fleeing flag when returning to patrol
+        ChangeState(new PatrolState(this));
     }
-
 
     public override bool CanSeePlayer()
     {
@@ -60,41 +60,67 @@ public class AIFlee : AIController
         float angleToPlayer = Vector3.Angle(transform.forward, directionToPlayer);
         float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
 
-        // ✅ More readable logs
-        Debug.Log(gameObject.name + $" 🔍 Checking vision: Distance={distanceToPlayer:F2}, Angle={angleToPlayer:F2}");
-
-        if (angleToPlayer < fieldOfView / 2)
+        if (angleToPlayer < fieldOfView / 2 && distanceToPlayer < detectionRange)
         {
             if (Physics.Raycast(transform.position, directionToPlayer, out RaycastHit hit, detectionRange))
             {
-                Debug.Log(gameObject.name + " 🔵 Raycast hit: " + hit.collider.gameObject.name);
-
                 if (hit.collider.gameObject == player)
                 {
-                    Debug.Log(gameObject.name + " 👀 Sees the player!");
+                    Debug.Log(gameObject.name + " 🚨 Sees player! **Entering FleeState!**");
+                    StartFleeing();  // ✅ Ensures AI enters FleeState
                     return true;
                 }
-                else
-                {
-                    Debug.LogWarning(gameObject.name + " ❌ Raycast hit " + hit.collider.gameObject.name + " instead of player.");
-                }
-            }
-            else
-            {
-                Debug.LogWarning(gameObject.name + " ❌ Raycast did not hit anything.");
             }
         }
-        else
-        {
-            Debug.Log(gameObject.name + " ❌ Player is outside FOV.");
-        }
-
         return false;
+    }
+
+    public void StartFleeing()
+    {
+        if (!isFleeing)
+        {
+            isFleeing = true; // ✅ Track fleeing state
+            ChangeState(new FleeState(this));
+        }
+    }
+
+    public void CheckFleeDistance()
+    {
+        if (!isFleeing) return; // ✅ Only check if actually fleeing
+
+        float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+
+        if (distanceToPlayer >= safeDistance)
+        {
+            Debug.Log(gameObject.name + " ✅ Safe distance reached. Returning to patrol.");
+            RestartPatrol();
+        }
     }
 
     public override void ChangeState(State newState)
     {
-        if (currentState != null) currentState.Exit();
+        // ✅ Prevent unnecessary state switching
+        if (currentState != null && currentState.GetType() == newState.GetType())
+        {
+            return;
+        }
+
+        if (newState is PatrolState && isFleeing)
+        {
+            Debug.Log(gameObject.name + " ❌ Cannot switch to PatrolState yet, still fleeing.");
+            return;
+        }
+
+        if (newState is PatrolState)
+        {
+            isFleeing = false; // ✅ Reset fleeing flag when returning to patrol
+        }
+
+        if (currentState != null)
+        {
+            currentState.Exit();
+        }
+
         currentState = newState;
         currentState.Enter();
     }
@@ -107,15 +133,16 @@ public class AIFlee : AIController
             return null;
         }
 
+        // ✅ Ensure AI cycles through waypoints properly
         Transform nextPoint = patrolPoints[currentPatrolIndex];
-
-        // ✅ Only increment the index **AFTER** reaching the waypoint
         currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Count;
 
         Debug.Log(gameObject.name + " 🔄 Moving to next patrol point: " + nextPoint.name);
         return nextPoint;
     }
 }
+
+
 
 
 

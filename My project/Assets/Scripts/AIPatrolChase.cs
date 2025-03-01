@@ -5,6 +5,7 @@ public class AIPatrolChase : AIController
 {
     [Header("Patrol Settings")]
     private int currentPatrolIndex = 0;
+    public bool loopPatrol = true; // ✅ Allows AI to loop waypoints or stop at the last one
 
     protected override void Start()
     {
@@ -36,16 +37,23 @@ public class AIPatrolChase : AIController
             return null;
         }
 
-        // ✅ Only increment patrol index **AFTER reaching the waypoint**
+        // ✅ If loopPatrol is false and AI reached the last waypoint, transition to an idle state
+        if (!loopPatrol && currentPatrolIndex >= patrolPoints.Count - 1)
+        {
+            Debug.Log(gameObject.name + " ⏹️ Reached last waypoint, stopping patrol.");
+            return null;
+        }
+
         Transform nextPoint = patrolPoints[currentPatrolIndex];
 
+        // ✅ Only loop if loopPatrol is true
         currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Count;
 
         Debug.Log(gameObject.name + " 🔄 Moving to next patrol point: " + nextPoint.name);
         return nextPoint;
     }
 
-    // ✅ Added function to restart patrol from the first waypoint
+    // ✅ FIX: Restart Patrol now ensures AI moves immediately
     public void RestartPatrol()
     {
         if (patrolPoints == null || patrolPoints.Count == 0)
@@ -56,9 +64,19 @@ public class AIPatrolChase : AIController
 
         Debug.Log(gameObject.name + " 🔄 Restarting patrol from the first waypoint.");
         currentPatrolIndex = 0;
-        ChangeState(new PatrolState(this));
+
+        // ✅ Immediately move towards the first patrol point
+        Transform nextPoint = patrolPoints[currentPatrolIndex];
+        if (nextPoint != null)
+        {
+            MoveTowards(nextPoint.position, patrolSpeed);
+        }
+
+        ChangeState(new PatrolState(this)); // ✅ Ensure state is properly switched
     }
 }
+
+
 
 
 

@@ -62,11 +62,19 @@ public abstract class AIController : Controller
             currentState.Execute(this);
         }
 
-        // ✅ Check if AI hears the player and reacts accordingly
-        if (CanHearPlayer() && !(currentState is ChaseState))
+        // ✅ FIX: AI Flee Tanks Should Not Enter ChaseState
+        if (CanHearPlayer())
         {
-            Debug.Log(gameObject.name + " 👂 Heard the player! Switching to ChaseState!");
-            ChangeState(new ChaseState(this));
+            if (this is AIFlee && !(currentState is FleeState))
+            {
+                Debug.Log(gameObject.name + " 🚨 Heard the player! **Entering FleeState!**");
+                ChangeState(new FleeState(this));
+            }
+            else if (!(this is AIFlee) && !(currentState is ChaseState)) // ✅ Other AI enters ChaseState
+            {
+                Debug.Log(gameObject.name + " 👂 Heard the player! **Entering ChaseState!**");
+                ChangeState(new ChaseState(this));
+            }
         }
 
         if (currentState is ChaseState && CanSeePlayer() && Time.time >= nextFireTime)
@@ -75,8 +83,6 @@ public abstract class AIController : Controller
             nextFireTime = Time.time + fireRate;
         }
     }
-
-
 
     // ✅ AI Can Move Check
     public bool CanMove()
@@ -150,9 +156,6 @@ public abstract class AIController : Controller
         return false;
     }
 
-
-
-
     // ✅ Optimized FireProjectile function
     public void FireProjectile()
     {
@@ -187,8 +190,8 @@ public abstract class AIController : Controller
         Debug.Log(gameObject.name + " 🏁 Entering State: " + currentState.GetType().Name);
         currentState.Enter();
     }
-
 }
+
 
 
 

@@ -3,6 +3,7 @@
 public class PatrolState : State
 {
     private Transform targetWaypoint;
+    private bool restartingPatrol = false; // ✅ Prevent infinite recursion
 
     public PatrolState(AIController ai) : base(ai) { }
 
@@ -10,14 +11,15 @@ public class PatrolState : State
     {
         Debug.Log(aiController.gameObject.name + " ▶ Entered PatrolState.");
 
-        // ✅ Immediately assign the first patrol waypoint
-        GetNextWaypoint();
-
-        if (targetWaypoint == null)
+        if (aiController is AIFlee fleeAI && !restartingPatrol)
         {
-            Debug.LogWarning(aiController.gameObject.name + " ❗ No valid waypoints available. Restarting patrol...");
-            RestartPatrol();
+            restartingPatrol = true;
+            fleeAI.RestartPatrol();  // ✅ Only restart patrol ONCE to avoid recursion
+            restartingPatrol = false;
         }
+
+        // ✅ Assign the first patrol waypoint
+        GetNextWaypoint();
     }
 
     public override void Execute(AIController ai)
@@ -31,7 +33,7 @@ public class PatrolState : State
         }
 
         // ✅ Move AI towards the patrol waypoint
-        ai.MoveTowards(targetWaypoint.position);
+        ai.MoveTowards(targetWaypoint.position, ai.patrolSpeed);
         Debug.Log(ai.gameObject.name + " 🚜 Moving towards: " + targetWaypoint.position);
 
         // ✅ Check if AI reached the waypoint
@@ -68,8 +70,13 @@ public class PatrolState : State
         if (aiController is AIPatrolChase patrolAI)
         {
             targetWaypoint = patrolAI.GetNextPatrolPoint();
+
+            if (!patrolAI.loopPatrol && targetWaypoint == null)
+            {
+                Debug.Log(patrolAI.gameObject.name + " ⏹️ Reached last waypoint, stopping patrol.");
+            }
         }
-        else if (aiController is AIFlee fleeAI)
+        else if (aiController is AIFlee fleeAI)  // ✅ Now works for AIFlee too
         {
             targetWaypoint = fleeAI.GetNextPatrolPoint();
         }
@@ -80,20 +87,7 @@ public class PatrolState : State
         }
         else
         {
-            Debug.LogWarning(aiController.gameObject.name + " ❗ Patrol points missing, attempting restart...");
-            RestartPatrol();
-        }
-    }
-
-    private void RestartPatrol()
-    {
-        if (aiController is AIPatrolChase patrolAI)
-        {
-            patrolAI.RestartPatrol();
-        }
-        else if (aiController is AIFlee fleeAI)
-        {
-            fleeAI.RestartPatrol();
+            Debug.LogWarning(aiController.gameObject.name + " ❗ Patrol points missing, staying idle.");
         }
     }
 
@@ -102,6 +96,7 @@ public class PatrolState : State
         Debug.Log(aiController.gameObject.name + " 🟡 Exiting PatrolState.");
     }
 }
+
 
 
 
