@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
@@ -8,10 +9,10 @@ public class GameManager : MonoBehaviour
     [Header("Player & AI Management")]
     public GameObject playerPrefab;
     public List<Transform> playerSpawnPoints;
-    public GameObject[] aiTankPrefabs; // Array of AI tank prefabs
+    public GameObject[] aiTankPrefabs;
     public List<Transform> aiSpawnPoints;
 
-    private List<GameObject> spawnedAI = new List<GameObject>(); // Keep track of AI instances
+    private List<GameObject> spawnedAI = new List<GameObject>();
 
     [Header("Powerup Management")]
     public List<Transform> powerupSpawnPoints;
@@ -37,12 +38,66 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        SpawnPlayer();
-        SpawnAITanks();
-        SpawnPowerups();
+        if (GameObject.FindWithTag("Player") == null)  // ✅ Prevents double player spawning
+        {
+            SpawnPlayer();
+        }
+
+        if (GameObject.FindWithTag("AI") == null)  // ✅ Prevents double AI spawning
+        {
+            SpawnAITanks();
+        }
+
+        StartCoroutine(SpawnPowerupsWithDelay());
     }
 
-    // ✅ Spawns player at a random location
+    // ✅ Spawns powerups with a random delay to avoid all appearing at once
+    private IEnumerator SpawnPowerupsWithDelay()
+    {
+        if (powerupPrefabs.Length == 0 || powerupSpawnPoints.Count == 0)
+        {
+            Debug.LogError("❌ No powerup prefabs or spawn points assigned!");
+            yield break;
+        }
+
+        foreach (Transform spawnPoint in powerupSpawnPoints)
+        {
+            yield return new WaitForSeconds(Random.Range(1f, 5f)); // ✅ Random delay between 1-5 seconds
+            SpawnPowerup(spawnPoint);
+        }
+    }
+
+    // ✅ Spawns a powerup at a given location
+    private void SpawnPowerup(Transform spawnPoint)
+    {
+        if (powerupPrefabs.Length == 0) return;
+
+        GameObject powerup = Instantiate(
+            powerupPrefabs[Random.Range(0, powerupPrefabs.Length)],
+            spawnPoint.position,
+            spawnPoint.rotation
+        );
+
+        Powerup powerupScript = powerup.GetComponent<Powerup>();
+        if (powerupScript != null)
+        {
+            powerupScript.SetRespawn(spawnPoint, powerupRespawnTime);
+        }
+    }
+
+    public void StartPowerupRespawn(Powerup powerup)
+    {
+        StartCoroutine(RespawnPowerup(powerup));
+    }
+
+    private IEnumerator RespawnPowerup(Powerup powerup)
+    {
+        yield return new WaitForSeconds(powerupRespawnTime);
+        powerup.gameObject.SetActive(true);
+    }
+
+
+    // ✅ Player Spawning
     public void SpawnPlayer()
     {
         if (playerPrefab == null || playerSpawnPoints.Count == 0)
@@ -55,7 +110,6 @@ public class GameManager : MonoBehaviour
         Instantiate(playerPrefab, randomSpawn.position, randomSpawn.rotation);
     }
 
-    // ✅ Respawn player at a random location when they die
     public void RespawnPlayer(GameObject player)
     {
         Transform randomSpawn = playerSpawnPoints[Random.Range(0, playerSpawnPoints.Count)];
@@ -63,7 +117,7 @@ public class GameManager : MonoBehaviour
         player.transform.rotation = randomSpawn.rotation;
     }
 
-    // ✅ Spawns 4 AI tanks with different personalities
+    // ✅ AI Spawning
     private void SpawnAITanks()
     {
         if (aiTankPrefabs.Length < 4 || aiSpawnPoints.Count < 4)
@@ -73,7 +127,7 @@ public class GameManager : MonoBehaviour
         }
 
         List<Transform> availableSpawns = new List<Transform>(aiSpawnPoints);
-        ShuffleList(availableSpawns); // Randomize spawn points
+        ShuffleList(availableSpawns);
 
         for (int i = 0; i < 4; i++)
         {
@@ -82,46 +136,6 @@ public class GameManager : MonoBehaviour
             spawnedAI.Add(aiTank);
             RegisterAI(aiTank.GetComponent<AIController>());
         }
-    }
-
-    // ✅ Prevents AI from patrolling between sections
-    public void RestrictAIToSection(AIController ai, Transform sectionCenter)
-    {
-        if (ai == null) return;
-        float sectionRadius = 20f; // Adjust this value based on section size
-
-        if (Vector3.Distance(ai.transform.position, sectionCenter.position) > sectionRadius)
-        {
-            ai.transform.position = sectionCenter.position;
-        }
-    }
-
-    // ✅ Spawns powerups at random locations
-    private void SpawnPowerups()
-    {
-        if (powerupPrefabs.Length == 0 || powerupSpawnPoints.Count == 0)
-        {
-            Debug.LogError("❌ No powerup prefabs or spawn points assigned!");
-            return;
-        }
-
-        foreach (Transform spawnPoint in powerupSpawnPoints)
-        {
-            GameObject powerup = Instantiate(
-                powerupPrefabs[Random.Range(0, powerupPrefabs.Length)],
-                spawnPoint.position,
-                spawnPoint.rotation
-            );
-
-            StartCoroutine(RespawnPowerup(powerup, spawnPoint));
-        }
-    }
-
-    // ✅ Handles powerup respawning after pickup
-    private System.Collections.IEnumerator RespawnPowerup(GameObject powerup, Transform spawnPoint)
-    {
-        yield return new WaitForSeconds(powerupRespawnTime);
-        Instantiate(powerup, spawnPoint.position, spawnPoint.rotation);
     }
 
     // ✅ Utility function to shuffle a list (randomize spawn points)
@@ -134,7 +148,14 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Registers a tank in the game
+    // ✅ Powerup Respawn System
+    public IEnumerator RespawnPowerup(Transform spawnPoint)
+    {
+        yield return new WaitForSeconds(powerupRespawnTime);
+        SpawnPowerup(spawnPoint);
+    }
+
+    // ✅ Player, AI, and Tank Registration
     public void RegisterTank(TankPawn tank)
     {
         if (tank != null && !tankPawns.Contains(tank))
@@ -143,7 +164,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Unregisters a tank
     public void UnregisterTank(TankPawn tank)
     {
         if (tank != null && tankPawns.Contains(tank))
@@ -152,7 +172,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Registers an AI controller
     public void RegisterAI(AIController ai)
     {
         if (ai != null && !aiControllers.Contains(ai))
@@ -161,7 +180,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Unregisters an AI controller
     public void UnregisterAI(AIController ai)
     {
         if (ai != null && aiControllers.Contains(ai))
@@ -170,7 +188,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Returns the first registered player controller
     public PlayerController GetPlayer()
     {
         if (playerControllers.Count > 0 && playerControllers[0] != null)
@@ -180,7 +197,6 @@ public class GameManager : MonoBehaviour
         return null;
     }
 
-    // ✅ Registers a player controller
     public void RegisterPlayer(PlayerController player)
     {
         if (player != null && !playerControllers.Contains(player))
@@ -189,7 +205,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Unregisters a player controller
     public void UnregisterPlayer(PlayerController player)
     {
         if (player != null && playerControllers.Contains(player))
@@ -198,7 +213,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Returns the AI controller closest to a given position
     public AIController GetNearestAI(Vector3 position)
     {
         if (aiControllers.Count == 0) return null;
@@ -220,7 +234,6 @@ public class GameManager : MonoBehaviour
         return nearestAI;
     }
 
-    // ✅ Returns the AI controller with the highest health
     public AIController GetStrongestAI()
     {
         if (aiControllers.Count == 0) return null;
@@ -242,7 +255,6 @@ public class GameManager : MonoBehaviour
         return strongestAI;
     }
 
-    // ✅ Returns a list of AI controllers that are currently in ChaseState
     public List<AIController> GetAllChasingAI()
     {
         List<AIController> chasingAI = new List<AIController>();

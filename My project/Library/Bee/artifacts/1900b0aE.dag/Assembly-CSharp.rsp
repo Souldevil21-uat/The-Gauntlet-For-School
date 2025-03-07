@@ -418,6 +418,7 @@
 "Assets/Scripts/PatrolState.cs"
 "Assets/Scripts/Pawn.cs"
 "Assets/Scripts/PlayerController.cs"
+"Assets/Scripts/PowerUp.cs"
 "Assets/Scripts/Projectile.cs"
 "Assets/Scripts/State.cs"
 "Assets/Scripts/TankPawn.cs"
