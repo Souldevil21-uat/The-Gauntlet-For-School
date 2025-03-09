@@ -110,14 +110,29 @@ public class GameManager : MonoBehaviour
         Instantiate(playerPrefab, randomSpawn.position, randomSpawn.rotation);
     }
 
+    // Respawn player at a random location when they die
     public void RespawnPlayer(GameObject player)
     {
+        if (player == null || playerSpawnPoints.Count == 0)
+        {
+            Debug.LogError("❌ Cannot respawn: No player or no spawn points!");
+            return;
+        }
+
         Transform randomSpawn = playerSpawnPoints[Random.Range(0, playerSpawnPoints.Count)];
         player.transform.position = randomSpawn.position;
         player.transform.rotation = randomSpawn.rotation;
+
+        // Restore health after respawn
+        Health playerHealth = player.GetComponent<Health>();
+        if (playerHealth != null)
+        {
+            playerHealth.ResetHealth();
+        }
     }
 
-    // ✅ AI Spawning
+
+    // AI Spawning
     private void SpawnAITanks()
     {
         if (aiTankPrefabs.Length < 4 || aiSpawnPoints.Count < 4)
@@ -138,7 +153,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Utility function to shuffle a list (randomize spawn points)
+    //  Utility function to shuffle a list (randomize spawn points)
     private void ShuffleList<T>(List<T> list)
     {
         for (int i = 0; i < list.Count; i++)
@@ -148,14 +163,14 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Powerup Respawn System
+    //  Powerup Respawn System
     public IEnumerator RespawnPowerup(Transform spawnPoint)
     {
         yield return new WaitForSeconds(powerupRespawnTime);
         SpawnPowerup(spawnPoint);
     }
 
-    // ✅ Player, AI, and Tank Registration
+    //  Player, AI, and Tank Registration
     public void RegisterTank(TankPawn tank)
     {
         if (tank != null && !tankPawns.Contains(tank))

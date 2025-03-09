@@ -3,20 +3,24 @@ using System.Collections.Generic;
 
 public class MapGenerator : MonoBehaviour
 {
+    public enum SeedType { Preset, Random, LevelOfTheDay } // 🎲 Editor Choice
+    [Header("Seed Settings")]
+    public SeedType seedMode = SeedType.Preset;
+    public int presetSeed = 0;
+
     [Header("Map Settings")]
     public int rows = 5;
     public int cols = 5;
     public float tileSize = 10f;
-    public bool levelOfTheDay = false;
-    public int randomSeed = 0;
     public GameObject[] mapSegments; // Assign in Inspector
 
     [Header("Spawn Point Prefabs")]
     public GameObject aiSpawnPrefab;
     public GameObject playerSpawnPrefab;
     public GameObject powerupSpawnPrefab;
+    public GameObject doorPrefab; // ✅ Assign a door prefab in the inspector
 
-    private GameObject[,] grid; // Stores the generated tiles
+    private GameObject[,] grid;
 
     void Start()
     {
@@ -27,20 +31,34 @@ public class MapGenerator : MonoBehaviour
     {
         if (mapSegments.Length == 0)
         {
-            Debug.LogError("No map segments assigned!");
+            Debug.LogError("❌ No map segments assigned!");
             return;
         }
 
-        // Set random seed (fixed if using levelOfTheDay)
-        if (levelOfTheDay)
+        // ✅ Choose the seed mode based on the Editor selection
+        switch (seedMode)
         {
-            randomSeed = System.DateTime.UtcNow.DayOfYear;
+            case SeedType.Preset:
+                Random.InitState(presetSeed);
+                Debug.Log("📌 Using **Preset Seed**: " + presetSeed);
+                break;
+
+            case SeedType.Random:
+                presetSeed = Random.Range(0, int.MaxValue);
+                Random.InitState(presetSeed);
+                Debug.Log("🎲 Using **Random Seed**: " + presetSeed);
+                break;
+
+            case SeedType.LevelOfTheDay:
+                presetSeed = System.DateTime.UtcNow.DayOfYear;
+                Random.InitState(presetSeed);
+                Debug.Log("🌍 Using **Level of the Day** - Seed: " + presetSeed);
+                break;
         }
-        Random.InitState(randomSeed);
 
         grid = new GameObject[rows, cols];
 
-        // Generate map tiles
+        // ✅ Generate map tiles
         for (int x = 0; x < rows; x++)
         {
             for (int y = 0; y < cols; y++)
@@ -51,20 +69,57 @@ public class MapGenerator : MonoBehaviour
             }
         }
 
-        // ✅ Spawn points must be placed AFTER map generation
+        // ✅ Place Doors Between Segments
+        PlaceDoors();
+
+        // ✅ Place Spawn Points after map is built
         PlaceSpawnPoints();
+    }
+
+    void PlaceDoors()
+    {
+        if (doorPrefab == null)
+        {
+            Debug.LogError("❌ No door prefab assigned!");
+            return;
+        }
+
+        for (int x = 0; x < rows; x++)
+        {
+            for (int y = 0; y < cols; y++)
+            {
+                if (grid[x, y] == null) continue;
+
+                Vector3 tilePosition = grid[x, y].transform.position;
+
+                // ✅ Check Right Neighbor
+                if (x < rows - 1 && grid[x + 1, y] != null)
+                {
+                    Vector3 doorPos = tilePosition + new Vector3(tileSize / 2, 0, 0);
+                    Instantiate(doorPrefab, doorPos, Quaternion.Euler(0, 90, 0), transform);
+                }
+
+                // ✅ Check Top Neighbor
+                if (y < cols - 1 && grid[x, y + 1] != null)
+                {
+                    Vector3 doorPos = tilePosition + new Vector3(0, 0, tileSize / 2);
+                    Instantiate(doorPrefab, doorPos, Quaternion.identity, transform);
+                }
+            }
+        }
+
+        Debug.Log("🚪 Doors placed successfully!");
     }
 
     void PlaceSpawnPoints()
     {
         List<Vector2Int> availableTiles = new List<Vector2Int>();
 
-        // Collect all open tiles (non-blocked)
         for (int x = 0; x < rows; x++)
         {
             for (int y = 0; y < cols; y++)
             {
-                if (IsTileOpen(grid[x, y])) // Only use open tiles
+                if (IsTileOpen(grid[x, y]))
                 {
                     availableTiles.Add(new Vector2Int(x, y));
                 }
@@ -73,27 +128,27 @@ public class MapGenerator : MonoBehaviour
 
         if (availableTiles.Count == 0)
         {
-            Debug.LogError("No valid tiles to place spawn points!");
+            Debug.LogError("❌ No valid tiles to place spawn points!");
             return;
         }
 
-        // Randomly place AI spawn points
-        for (int i = 0; i < 4; i++) // 4 AI spawns
+        // ✅ Place AI Spawn Points
+        for (int i = 0; i < 4; i++)
         {
             if (availableTiles.Count == 0) break;
             Vector2Int aiPos = GetRandomTile(availableTiles);
             PlaceSpawn(aiSpawnPrefab, aiPos);
         }
 
-        // Randomly place Player spawn point
+        // ✅ Place Player Spawn Point
         if (availableTiles.Count > 0)
         {
             Vector2Int playerPos = GetRandomTile(availableTiles);
             PlaceSpawn(playerSpawnPrefab, playerPos);
         }
 
-        // Randomly place Powerup spawn points (at least one per section)
-        int numPowerups = Mathf.Max(3, rows * cols / 5); // Adjust based on map size
+        // ✅ Place Powerup Spawn Points
+        int numPowerups = Mathf.Max(3, rows * cols / 5);
         for (int i = 0; i < numPowerups; i++)
         {
             if (availableTiles.Count == 0) break;
@@ -116,16 +171,20 @@ public class MapGenerator : MonoBehaviour
     {
         int index = Random.Range(0, tileList.Count);
         Vector2Int selectedTile = tileList[index];
-        tileList.RemoveAt(index); // Prevent duplicate placements
+        tileList.RemoveAt(index);
         return selectedTile;
     }
 
     bool IsTileOpen(GameObject tile)
     {
-        // Add logic to check if tile is valid (not blocked)
-        return tile != null; // For now, assume all tiles are valid
+        return tile != null;
     }
 }
+
+
+
+
+
 
 
 

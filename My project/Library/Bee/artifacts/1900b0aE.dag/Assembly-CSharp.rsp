@@ -410,6 +410,7 @@
 "Assets/Scripts/CameraFollow.cs"
 "Assets/Scripts/ChaseState.cs"
 "Assets/Scripts/Controller.cs"
+"Assets/Scripts/DoorController.cs"
 "Assets/Scripts/FleeState.cs"
 "Assets/Scripts/GameManager.cs"
 "Assets/Scripts/Health.cs"

@@ -14,13 +14,13 @@ public class CameraFollow : MonoBehaviour
             return;
         }
 
-        // ✅ Calculate the desired position
+        // Calculate the desired position
         Vector3 desiredPosition = target.position + offset;
 
-        // ✅ Smoothly move the camera to the desired position
+        // Smoothly move the camera to the desired position
         transform.position = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
 
-        // ✅ Make the camera look at the player
+        // Make the camera look at the player
         transform.LookAt(target);
     }
 }

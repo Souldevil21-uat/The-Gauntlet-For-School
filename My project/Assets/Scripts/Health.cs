@@ -40,12 +40,18 @@ public class Health : MonoBehaviour
     // Handles object destruction when health reaches zero
     private void Die()
     {
-        // Trigger any death-related events before destruction
-        OnDeath?.Invoke();
+        Debug.Log(gameObject.name + " has died!");
 
-        // Optional: Replace with a deactivation system instead of immediate destruction
-        Destroy(gameObject);
+        if (gameObject.CompareTag("Player")) // Check if the dead object is the player
+        {
+            GameManager.Instance.RespawnPlayer(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject); // Destroy AI tanks when they die
+        }
     }
+
 }
 
 
