@@ -421,6 +421,7 @@
 "Assets/Scripts/PlayerController.cs"
 "Assets/Scripts/PowerUp.cs"
 "Assets/Scripts/Projectile.cs"
+"Assets/Scripts/StartScreenUi.cs"
 "Assets/Scripts/State.cs"
 "Assets/Scripts/TankPawn.cs"
 -langversion:9.0
