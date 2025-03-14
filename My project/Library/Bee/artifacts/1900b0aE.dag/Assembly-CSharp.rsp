@@ -413,6 +413,7 @@
 "Assets/Scripts/DoorController.cs"
 "Assets/Scripts/FleeState.cs"
 "Assets/Scripts/GameManager.cs"
+"Assets/Scripts/GameOverManager.cs"
 "Assets/Scripts/Health.cs"
 "Assets/Scripts/MapGenerator.cs"
 "Assets/Scripts/Movement.cs"
@@ -421,9 +422,11 @@
 "Assets/Scripts/PlayerController.cs"
 "Assets/Scripts/PowerUp.cs"
 "Assets/Scripts/Projectile.cs"
+"Assets/Scripts/ScoreManager.cs"
 "Assets/Scripts/StartScreenUi.cs"
 "Assets/Scripts/State.cs"
 "Assets/Scripts/TankPawn.cs"
+"Assets/Scripts/UIManager.cs"
 -langversion:9.0
 /deterministic
 /optimize+

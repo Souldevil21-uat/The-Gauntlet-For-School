@@ -1,20 +1,36 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : Controller
 {
     [Header("Shooting Settings")]
-    public GameObject projectilePrefab; // Prefab for the projectile
-    public Transform firePoint;         // Fire point location
-    public float projectileSpeed = 20f; // Speed of the projectile
-    public float projectileDamage = 10f; // Damage per shot
-    public float fireRate = 0.5f;       // Cooldown time between shots
-    private float nextFireTime = 0f;    // Time when the next shot is allowed
-    private GameObject activeProjectile = null; // Tracks the currently active projectile
-    private bool canShoot = true;       // Flag to enable/disable shooting
+    public GameObject projectilePrefab;
+    public Transform firePoint;
+    public float projectileSpeed = 20f;
+    public float projectileDamage = 10f;
+    public float fireRate = 0.5f;
+    private float nextFireTime = 0f;
+    private GameObject activeProjectile = null;
+    private bool canShoot = true;
+
+    [Header("Health & Lives")]
+    public int maxHealth = 100;  // Maximum health per life
+    private int currentHealth;   // Tracks health
+    public int lives = 3;        // Number of lives
+
+    private GameOverManager gameOverManager;
+    private GameManager gameManager;
 
     [Header("Movement Tracking")]
-    public bool isMoving { get; private set; }  // Tracks if the player is moving
-    public bool isShooting { get; private set; } // Tracks if the player is shooting
+    public bool isMoving { get; private set; }
+    public bool isShooting { get; private set; }
+
+    void Start()
+    {
+        gameOverManager = FindObjectOfType<GameOverManager>();
+        gameManager = FindObjectOfType<GameManager>();
+        currentHealth = maxHealth;  // Start with full health
+    }
 
     protected override void Update()
     {
@@ -22,13 +38,13 @@ public class PlayerController : Controller
         HandleMovement();
         HandleShooting();
     }
-    /// Handles player movement input and updates pawn movement.
+
     private void HandleMovement()
     {
-        float moveInput = Input.GetAxis("Vertical"); // Forward/backward movement
-        float rotateInput = Input.GetAxis("Horizontal"); // Left/right rotation
+        float moveInput = Input.GetAxis("Vertical");
+        float rotateInput = Input.GetAxis("Horizontal");
 
-        isMoving = moveInput != 0 || rotateInput != 0; // Updates movement status
+        isMoving = moveInput != 0 || rotateInput != 0;
 
         if (pawn != null)
         {
@@ -36,19 +52,18 @@ public class PlayerController : Controller
             pawn.Rotate(rotateInput);
         }
     }
-    /// Handles shooting input and triggers projectile firing.
+
     private void HandleShooting()
     {
-        if (!canShoot) return; // Prevents shooting if disabled
+        if (!canShoot) return;
 
         if (Input.GetKeyDown(KeyCode.Space) && activeProjectile == null && Time.time >= nextFireTime)
         {
             FireProjectile();
-            nextFireTime = Time.time + fireRate; // Enforces fire rate cooldown
+            nextFireTime = Time.time + fireRate;
         }
     }
 
-    /// Instantiates and fires a projectile.
     private void FireProjectile()
     {
         if (projectilePrefab == null || firePoint == null)
@@ -62,7 +77,7 @@ public class PlayerController : Controller
 
         if (projectileScript != null)
         {
-            activeProjectile = newProjectile; // Tracks active projectile
+            activeProjectile = newProjectile;
             projectileScript.Initialize(gameObject, projectileSpeed, projectileDamage);
         }
         else
@@ -71,24 +86,62 @@ public class PlayerController : Controller
         }
     }
 
-    /// Called when the active projectile is destroyed, allowing the player to fire again.
     public void OnProjectileDestroyed()
     {
         activeProjectile = null;
     }
 
-    /// Enables or disables the ability to shoot.
     public void EnableShooting(bool enable)
     {
         canShoot = enable;
     }
 
-    /// Checks if the player is making noise (moving or shooting).
     public bool IsMakingNoise()
     {
         return isMoving || isShooting;
     }
+
+    public void TakeDamage(int damage)
+    {
+        currentHealth -= damage;
+
+        if (currentHealth <= 0)  // Player loses a life when health hits 0
+        {
+            LoseLife();
+        }
+        UIManager.Instance.UpdateLives(lives); // Update UI
+    }
+
+
+    private void LoseLife()
+    {
+        lives--;
+
+        if (lives <= 0)
+        {
+            // If no lives left, trigger Game Over
+            gameOverManager.ShowGameOverScreen(GetFinalScore());
+            Destroy(gameObject); // Remove player tank
+        }
+        else
+        {
+            // Respawn player
+            Respawn();
+        }
+    }
+
+    private void Respawn()
+    {
+        currentHealth = maxHealth; // Reset health
+        gameManager.RespawnPlayer(gameObject); // Move player to new location
+    }
+
+    private int GetFinalScore()
+    {
+        return ScoreManager.Instance.GetScore();
+    }
 }
+
 
 
 
