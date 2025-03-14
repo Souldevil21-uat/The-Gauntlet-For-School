@@ -10,7 +10,7 @@ public class StartScreenUI : MonoBehaviour
 
     public void OpenOptions()
     {
-        SceneManager.LoadScene("OptionsMenu"); // Ensure you have an Options Menu scene
+        SceneManager.LoadScene("OptionScene"); // Ensure you have an Options Menu scene
     }
 
     public void ExitGame()
