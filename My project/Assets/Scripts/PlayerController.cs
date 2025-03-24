@@ -3,6 +3,13 @@ using UnityEngine.SceneManagement;
 
 public class PlayerController : Controller
 {
+    [Header("Player Settings")]
+    public int playerNumber = 1;
+    public int maxHealth = 100;
+    private int currentHealth;
+    public int lives = 3;
+    public AudioClip fireSound;
+
     [Header("Shooting Settings")]
     public GameObject projectilePrefab;
     public Transform firePoint;
@@ -10,26 +17,61 @@ public class PlayerController : Controller
     public float projectileDamage = 10f;
     public float fireRate = 0.5f;
     private float nextFireTime = 0f;
-    private GameObject activeProjectile = null;
     private bool canShoot = true;
-
-    [Header("Health & Lives")]
-    public int maxHealth = 100;  // Maximum health per life
-    private int currentHealth;   // Tracks health
-    public int lives = 3;        // Number of lives
-
-    private GameOverManager gameOverManager;
-    private GameManager gameManager;
 
     [Header("Movement Tracking")]
     public bool isMoving { get; private set; }
     public bool isShooting { get; private set; }
 
-    void Start()
+    private GameObject activeProjectile = null;
+    private GameManager gameManager;
+    private UIManager_GameScene gameUIManager;
+
+    // 🔹 Explicit Input Mappings (Fixed)
+    private string moveAxis;
+    private string rotateAxis;
+    private KeyCode shootKey;
+
+    protected override void Start()
     {
-        gameOverManager = FindObjectOfType<GameOverManager>();
         gameManager = FindObjectOfType<GameManager>();
-        currentHealth = maxHealth;  // Start with full health
+        FindGameUIManager();
+        currentHealth = maxHealth;
+
+        // ✅ Ensure player number is assigned correctly
+        if (gameObject.CompareTag("Player 2"))
+        {
+            playerNumber = 2;
+        }
+        else
+        {
+            playerNumber = 1;
+        }
+
+        Debug.Log($"🎮 PlayerController Initialized: Player {playerNumber}");
+
+        // 🔹 Assign controls based on player number
+        if (playerNumber == 1)
+        {
+            moveAxis = "Vertical";  // WASD
+            rotateAxis = "Horizontal";
+            shootKey = KeyCode.Space;
+        }
+        else if (playerNumber == 2)
+        {
+            moveAxis = "P2_Vertical";  // Arrow Keys
+            rotateAxis = "P2_Horizontal";
+            shootKey = KeyCode.RightControl;
+        }
+
+        if (pawn == null)
+        {
+            Debug.LogError($"ERROR: Player {playerNumber} does not have an assigned pawn!");
+        }
+        else
+        {
+            Debug.Log($"Player {playerNumber} is controlling {pawn.name}");
+        }
     }
 
     protected override void Update()
@@ -39,10 +81,11 @@ public class PlayerController : Controller
         HandleShooting();
     }
 
+    // ✅ FIX: Player-Specific Movement
     private void HandleMovement()
     {
-        float moveInput = Input.GetAxis("Vertical");
-        float rotateInput = Input.GetAxis("Horizontal");
+        float moveInput = Input.GetAxisRaw(moveAxis);  // Ensures only one input per player
+        float rotateInput = Input.GetAxisRaw(rotateAxis);
 
         isMoving = moveInput != 0 || rotateInput != 0;
 
@@ -51,16 +94,29 @@ public class PlayerController : Controller
             pawn.Move(moveInput);
             pawn.Rotate(rotateInput);
         }
+
+        Debug.Log($"Player {playerNumber} Move Input: {Input.GetAxisRaw(moveAxis)}");
+        Debug.Log($"Player {playerNumber} Rotate Input: {Input.GetAxisRaw(rotateAxis)}");
+
     }
 
+    // ✅ FIX: Player-Specific Shooting
     private void HandleShooting()
     {
         if (!canShoot) return;
 
-        if (Input.GetKeyDown(KeyCode.Space) && activeProjectile == null && Time.time >= nextFireTime)
+        if (Input.GetKeyDown(shootKey))
         {
-            FireProjectile();
-            nextFireTime = Time.time + fireRate;
+            isShooting = true;
+            if (Time.time >= nextFireTime)
+            {
+                FireProjectile();
+                nextFireTime = Time.time + fireRate;
+            }
+        }
+        else
+        {
+            isShooting = false;
         }
     }
 
@@ -80,20 +136,27 @@ public class PlayerController : Controller
             activeProjectile = newProjectile;
             projectileScript.Initialize(gameObject, projectileSpeed, projectileDamage);
         }
-        else
+
+        // 🎵 Fire sound
+        if (fireSound != null)
         {
-            Debug.LogError("ERROR: Projectile script missing!");
+            AudioManager.Instance.PlaySFX(fireSound);
         }
     }
+
 
     public void OnProjectileDestroyed()
     {
         activeProjectile = null;
     }
 
-    public void EnableShooting(bool enable)
+    private void Respawn()
     {
-        canShoot = enable;
+        currentHealth = maxHealth;
+        if (gameManager != null)
+        {
+            gameManager.RespawnPlayer(playerNumber);
+        }
     }
 
     public bool IsMakingNoise()
@@ -101,17 +164,25 @@ public class PlayerController : Controller
         return isMoving || isShooting;
     }
 
+    private void FindGameUIManager()
+    {
+        gameUIManager = FindObjectOfType<UIManager_GameScene>();
+    }
+
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
 
-        if (currentHealth <= 0)  // Player loses a life when health hits 0
+        if (currentHealth <= 0)
         {
             LoseLife();
         }
-        UIManager.Instance.UpdateLives(lives); // Update UI
-    }
 
+        if (gameUIManager != null)
+        {
+            gameUIManager.UpdateLives(playerNumber, lives);
+        }
+    }
 
     private void LoseLife()
     {
@@ -119,28 +190,24 @@ public class PlayerController : Controller
 
         if (lives <= 0)
         {
-            // If no lives left, trigger Game Over
-            gameOverManager.ShowGameOverScreen(GetFinalScore());
-            Destroy(gameObject); // Remove player tank
+            if (gameManager != null)
+            {
+                gameManager.PlayerDied(playerNumber);
+            }
+            Destroy(gameObject);
         }
         else
         {
-            // Respawn player
             Respawn();
         }
     }
-
-    private void Respawn()
-    {
-        currentHealth = maxHealth; // Reset health
-        gameManager.RespawnPlayer(gameObject); // Move player to new location
-    }
-
-    private int GetFinalScore()
-    {
-        return ScoreManager.Instance.GetScore();
-    }
 }
+
+
+
+
+
+
 
 
 

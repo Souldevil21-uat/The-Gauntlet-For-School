@@ -5,6 +5,13 @@ TagManager:
   serializedVersion: 3
   tags:
   - AI
+  - Player 2
+  - Player 2 Camera
+  - Player 1 Camera
+  - AI Spawn Point
+  - PlayerSpawn
+  - Waypoint
+  - PowerupSpawn
   layers:
   - Default
   - TransparentFX

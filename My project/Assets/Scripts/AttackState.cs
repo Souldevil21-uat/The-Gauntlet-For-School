@@ -3,23 +3,39 @@
 public class AttackState : State
 {
     private float attackCooldown = 1.5f; // Time between shots
+    private float lostPlayerTime = 0f;   // Time since the player was last seen
+    private float lostPlayerThreshold = 2f; // AI will wait 2 seconds before returning to ambush
 
     public AttackState(AIController ai) : base(ai) { }
 
-    // Called when the AI enters Attack mode
     public override void Enter()
     {
-        // AI prepares to fire at the player
+        Debug.Log($"{aiController.name} entered AttackState.");
+        lostPlayerTime = 0f;
     }
 
-    // Continuously executes attack logic while AI is in Attack mode
     public override void Execute(AIController ai)
     {
-        // If the player is no longer visible, return to Ambush mode
-        if (!ai.CanSeePlayer())
+        if (ai.player == null)
         {
+            Debug.LogWarning($"{ai.name} has no player reference in AttackState!");
             ai.ChangeState(new AmbushState(ai));
             return;
+        }
+
+        if (!ai.CanSeePlayer())
+        {
+            lostPlayerTime += Time.deltaTime;
+            if (lostPlayerTime >= lostPlayerThreshold)
+            {
+                Debug.Log($"{ai.name} lost sight of the player. Returning to AmbushState.");
+                ai.ChangeState(new AmbushState(ai));
+            }
+            return;
+        }
+        else
+        {
+            lostPlayerTime = 0f; // Reset lost player timer if they are visible
         }
 
         // Rotate towards the player before firing
@@ -39,11 +55,12 @@ public class AttackState : State
         }
     }
 
-    // Called when the AI exits Attack mode
     public override void Exit()
     {
-        // No additional exit behavior required
+        Debug.Log($"{aiController.name} exited AttackState.");
     }
 }
+
+
 
 

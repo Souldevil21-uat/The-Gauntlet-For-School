@@ -2,29 +2,31 @@
 
 public class AmbushState : State
 {
+    private float maxAmbushTime = 15f; // Max time in ambush before switching to patrol
+    private float ambushTimer;
+
     public AmbushState(AIController ai) : base(ai) { }
 
-    // Called when the AI enters Ambush mode
     public override void Enter()
     {
-        // AI remains idle, waiting for the player to get close
+        ambushTimer = 0f;
+        Debug.Log($"{aiController.name} entered AmbushState.");
     }
 
-    // Continuously checks if the player is within detection range
     public override void Execute(AIController ai)
     {
         if (ai.CanSeePlayer())
         {
-            // If the player is detected, transition to AttackState
-            ai.ChangeState(new AttackState(ai));
+            Debug.Log(ai.gameObject.name + " detected the player! Switching to AttackState.");
+            ai.ChangeState(new AttackState(ai)); // Switch to attacking
         }
     }
 
-    // Called when the AI exits Ambush mode
     public override void Exit()
     {
-        // No additional exit behavior required
+        Debug.Log($"{aiController.name} exited AmbushState.");
     }
 }
+
 
 

@@ -3,31 +3,44 @@ using UnityEngine;
 public class TankMovement : MonoBehaviour
 {
     [Header("Tank Movement Settings")]
-    public float moveSpeed = 10f; // Speed for forward and backward movement
-    public float turnSpeed = 50f; // Speed for left and right rotation
+    public float moveSpeed = 10f;  // Speed for forward and backward movement
+    public float turnSpeed = 50f;  // Speed for rotation
+    public bool isPlayerOne = true; // Determines if this is Player 1 or Player 2
 
     private Rigidbody rb; // Reference to the tank's Rigidbody component
 
-    void Start()
+    void Awake()
     {
-        // Get the Rigidbody component attached to the tank
-        rb = GetComponent<Rigidbody>();
+        rb = GetComponent<Rigidbody>(); // Assign Rigidbody once
     }
 
     void FixedUpdate()
     {
-        // Get movement input from the player (W/S or Up/Down Arrow keys)
-        float moveInput = Input.GetAxis("Vertical");
+        HandleMovement();
+        HandleRotation();
+    }
 
-        // Get rotation input from the player (A/D or Left/Right Arrow keys)
-        float turnInput = Input.GetAxis("Horizontal");
+    private void HandleMovement()
+    {
+        // Get movement input (Player 1 uses W/S, Player 2 uses Up/Down)
+        float moveInput = isPlayerOne ? Input.GetAxis("Vertical") : Input.GetAxis("P2_Vertical");
 
         // Move the tank forward or backward
         Vector3 moveDirection = transform.forward * moveInput * moveSpeed * Time.fixedDeltaTime;
-        rb.MovePosition(rb.position + moveDirection);
+        rb.linearVelocity = new Vector3(moveDirection.x, rb.linearVelocity.y, moveDirection.z); // Preserve gravity
+    }
 
-        // Rotate the tank left or right
-        Quaternion turnRotation = Quaternion.Euler(0f, turnInput * turnSpeed * Time.fixedDeltaTime, 0f);
-        rb.MoveRotation(rb.rotation * turnRotation);
+    private void HandleRotation()
+    {
+        // Get rotation input (Player 1 uses A/D, Player 2 uses Left/Right)
+        float turnInput = isPlayerOne ? Input.GetAxis("Horizontal") : Input.GetAxis("P2_Horizontal");
+
+        // Rotate the tank left or right smoothly
+        if (Mathf.Abs(turnInput) > 0.1f) // Prevent unnecessary calculations
+        {
+            Quaternion turnRotation = Quaternion.Euler(0f, turnInput * turnSpeed * Time.fixedDeltaTime, 0f);
+            rb.MoveRotation(rb.rotation * turnRotation);
+        }
     }
 }
+

@@ -2,47 +2,66 @@
 
 public class FleeState : State
 {
-    private float fleeSpeed = 8f; // AI moves at a faster speed while fleeing
-    private float safeThreshold = 15f; // AI stops fleeing if this distance from the player is reached
+    private float fleeSpeed;
+    private float safeThreshold = 15f;
+    private Vector3 fleeTarget;
+    private float fleeDistance = 10f; // How far it should move away before re-evaluating
 
-    public FleeState(AIController ai) : base(ai) { }
+    public FleeState(AIController ai) : base(ai)
+    {
+        this.fleeSpeed = ai.fleeSpeed;
+    }
 
     public override void Enter()
     {
-        // AI enters the FleeState when detecting a threat
+        Debug.Log(aiController.gameObject.name + " entered FleeState!");
     }
 
     public override void Execute(AIController ai)
     {
-        // If the player is missing (e.g., destroyed or not detected), return to patrol
-        if (ai.player == null)
+        GameObject player = aiController.player;
+
+        if (player == null)
         {
-            ai.ChangeState(new PatrolState(ai));
+            Debug.Log(aiController.gameObject.name + " lost sight of the player. Returning to patrol.");
+            aiController.ChangeState(new PatrolState(aiController));
             return;
         }
 
-        float distanceToPlayer = Vector3.Distance(ai.transform.position, ai.player.transform.position);
+        float distanceToPlayer = Vector3.Distance(aiController.transform.position, player.transform.position);
 
-        // If AI reaches a safe distance, it returns to patrolling
         if (distanceToPlayer >= safeThreshold)
         {
-            ai.ChangeState(new PatrolState(ai));
+            Debug.Log(aiController.gameObject.name + " reached safe distance. Returning to patrol.");
+            aiController.ChangeState(new PatrolState(aiController));
             return;
         }
 
-        // AI calculates the opposite direction from the player to flee
-        Vector3 fleeDirection = (ai.transform.position - ai.player.transform.position).normalized;
-        Vector3 safePoint = ai.transform.position + fleeDirection * 10f;
+        // Move directly away from the player's position
+        Vector3 fleeDirection = (aiController.transform.position - player.transform.position).normalized;
+        fleeTarget = aiController.transform.position + fleeDirection * fleeDistance;
 
-        ai.RotateTowards(safePoint); // Rotate toward the escape direction before moving
-        ai.MoveTowards(safePoint, ai.fleeSpeed); // Move away from the player at flee speed
+        // Check for obstacles
+        if (Physics.Raycast(aiController.transform.position, fleeDirection, out RaycastHit hit, fleeDistance))
+        {
+            Debug.LogWarning(aiController.gameObject.name + " hit an obstacle! Adjusting course.");
+            fleeTarget += aiController.transform.right * 3f; // Move slightly to the side to avoid getting stuck
+        }
+
+        aiController.RotateTowards(fleeTarget);
+        aiController.MoveTowards(fleeTarget, fleeSpeed);
     }
 
     public override void Exit()
     {
-        // AI exits the FleeState when it's no longer threatened
+        Debug.Log(aiController.gameObject.name + " exited FleeState!");
     }
 }
+
+
+
+
+
 
 
 

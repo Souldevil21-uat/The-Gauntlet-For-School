@@ -8,7 +8,7 @@ public class TankPawn : Pawn
     [SerializeField] private float maxSpeed = 10f;     // Maximum movement speed
 
     private float currentSpeed = 0f; // Tracks the tank's current speed
-    [SerializeField] private new Rigidbody rb; // Rigidbody reference
+    private Rigidbody rb; // Rigidbody reference
 
     /// <summary>
     /// Initializes the tank pawn and registers it with the GameManager.
@@ -20,7 +20,7 @@ public class TankPawn : Pawn
 
         if (rb == null)
         {
-            Debug.LogError(gameObject.name + " ERROR: Rigidbody is missing on TankPawn!");
+            Debug.LogError($"{gameObject.name} ERROR: Rigidbody is missing on TankPawn!");
         }
 
         GameManager.Instance.RegisterTank(this);
@@ -42,29 +42,37 @@ public class TankPawn : Pawn
     /// </summary>
     public override void Move(float input)
     {
+        if (rb == null) return;
+
         if (input != 0)
         {
             currentSpeed += acceleration * input * Time.deltaTime;
         }
         else
         {
-            // Apply deceleration when no movement input is given
-            if (currentSpeed > 0)
-            {
-                currentSpeed = Mathf.Max(currentSpeed - deceleration * Time.deltaTime, 0);
-            }
-            else if (currentSpeed < 0)
-            {
-                currentSpeed = Mathf.Min(currentSpeed + deceleration * Time.deltaTime, 0);
-            }
+            ApplyDeceleration();
         }
 
         // Clamp speed to the allowed range
         currentSpeed = Mathf.Clamp(currentSpeed, -maxSpeed, maxSpeed);
 
         // Move the tank forward based on the current speed
-        Vector3 moveDirection = transform.forward * currentSpeed * Time.deltaTime;
-        rb.MovePosition(rb.position + moveDirection);
+        rb.MovePosition(rb.position + transform.forward * currentSpeed * Time.deltaTime);
+    }
+
+    /// <summary>
+    /// Applies gradual deceleration when no movement input is detected.
+    /// </summary>
+    private void ApplyDeceleration()
+    {
+        if (currentSpeed > 0)
+        {
+            currentSpeed = Mathf.Max(currentSpeed - deceleration * Time.deltaTime, 0);
+        }
+        else if (currentSpeed < 0)
+        {
+            currentSpeed = Mathf.Min(currentSpeed + deceleration * Time.deltaTime, 0);
+        }
     }
 
     /// <summary>
@@ -74,17 +82,17 @@ public class TankPawn : Pawn
     {
         if (rb == null)
         {
-            Debug.LogWarning(gameObject.name + " ERROR: Cannot rotate, Rigidbody is missing!");
+            Debug.LogWarning($"{gameObject.name} ERROR: Cannot rotate, Rigidbody is missing!");
             return;
         }
 
         if (input != 0)
         {
-            float rotationAmount = input * rotateSpeed * Time.deltaTime;
-            Quaternion turnRotation = Quaternion.Euler(0f, rotationAmount, 0f);
+            Quaternion turnRotation = Quaternion.Euler(0f, input * rotateSpeed * Time.deltaTime, 0f);
             rb.MoveRotation(rb.rotation * turnRotation);
         }
     }
 }
+
 
 

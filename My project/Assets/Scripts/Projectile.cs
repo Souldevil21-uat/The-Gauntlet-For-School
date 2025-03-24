@@ -11,6 +11,7 @@ public class Projectile : MonoBehaviour
     private GameObject owner;     // The shooter that fired this projectile
     private PlayerController ownerController;
     private bool hasHit = false;  // Prevents multiple hits
+    public AudioClip hitClip; // Assign in Inspector
 
     /// Initializes the projectile with speed, damage, and owner.
     public void Initialize(GameObject shooter, float projectileSpeed, float projectileDamage)
@@ -20,9 +21,12 @@ public class Projectile : MonoBehaviour
         damage = projectileDamage;
         rb = GetComponent<Rigidbody>();
 
-        ownerController = shooter.GetComponent<PlayerController>();
+        if (shooter != null)
+        {
+            ownerController = shooter.GetComponent<PlayerController>();
+        }
 
-        // Destroy projectile if Rigidbody is missing
+        // Ensure Rigidbody is present
         if (rb == null)
         {
             Debug.LogError("ERROR: Rigidbody missing on projectile!");
@@ -42,7 +46,7 @@ public class Projectile : MonoBehaviour
         }
 
         // Destroy projectile after its lifespan expires
-        Destroy(gameObject, lifespan);
+        Invoke(nameof(DestroyProjectile), lifespan);
     }
 
     /// Handles collision with other objects.
@@ -59,6 +63,7 @@ public class Projectile : MonoBehaviour
         {
             targetHealth.TakeDamage(damage);
         }
+        AudioManager.Instance.PlaySFX(hitClip);
 
         hasHit = true;
         DestroyProjectile();
@@ -74,6 +79,7 @@ public class Projectile : MonoBehaviour
         Destroy(gameObject);
     }
 }
+
 
 
 

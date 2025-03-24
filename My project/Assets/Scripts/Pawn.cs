@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Pawn : MonoBehaviour
 {
@@ -10,29 +10,53 @@ public class Pawn : MonoBehaviour
 
     protected virtual void Start()
     {
-        rb = GetComponent<Rigidbody>(); // Get Rigidbody component on start
+        rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.isKinematic = false; // Ensures AI moves properly
+        }
     }
 
     /// Rotates the Pawn towards a target position smoothly.
-    /// <param name="targetPosition">The world position to rotate towards.</param>
     public void RotateTowards(Vector3 targetPosition)
     {
+        if (rb == null) return;
+
         Vector3 direction = (targetPosition - transform.position).normalized;
+        if (direction == Vector3.zero) return; // Prevents rotation errors
+
         Quaternion targetRotation = Quaternion.LookRotation(direction);
         rb.MoveRotation(Quaternion.RotateTowards(rb.rotation, targetRotation, rotateSpeed * Time.deltaTime));
     }
 
-    /// Placeholder function for movement. To be overridden in child classes.
-    /// <param name="input">Movement input value.</param>
+    /// Moves the Pawn forward or backward based on input.
     public virtual void Move(float input)
     {
-        // To be implemented in subclasses
+        if (rb == null)
+        {
+            Debug.LogError(gameObject.name + " ERROR: Rigidbody is missing!");
+            return;
+        }
+
+        Vector3 moveDirection = transform.forward * input * moveSpeed * Time.deltaTime; // 🔥 **Fix: Apply `moveSpeed`**
+
+        rb.MovePosition(rb.position + moveDirection);
+
+        Debug.Log(gameObject.name + " moving with speed: " + input * moveSpeed);
     }
-    /// Placeholder function for rotation. To be overridden in child classes.
-    /// <param name="input">Rotation input value.</param>
+
+    /// Rotates the Pawn left or right based on input.
     public virtual void Rotate(float input)
     {
-        // To be implemented in subclasses
+        if (rb == null) return;
+
+        float rotationAmount = input * rotateSpeed * Time.deltaTime;
+        Quaternion turnRotation = Quaternion.Euler(0f, rotationAmount, 0f);
+        rb.MoveRotation(rb.rotation * turnRotation);
     }
 }
+
+
+
 

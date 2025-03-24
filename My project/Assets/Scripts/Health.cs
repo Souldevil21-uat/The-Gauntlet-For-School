@@ -1,23 +1,29 @@
 ﻿using UnityEngine;
-using System; // Needed for Action events
+using System;
+using System.Collections;
 
 public class Health : MonoBehaviour
 {
     public float maxHealth = 100f;
     public float currentHealth;
+    public AudioClip deathClip;
 
-    // Event triggered when the object dies
+    // Events for health changes and death
+    public event Action<float> OnHealthChanged;
     public event Action OnDeath;
 
     void Start()
     {
+        //AudioManager.Instance.SetSFXVolume(0.3f);
         ResetHealth();
+
     }
 
     // Resets health to maximum (useful for respawning mechanics)
     public void ResetHealth()
     {
         currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth); // Notify UI or effects
     }
 
     // Handles taking damage, with an optional damage source
@@ -30,6 +36,7 @@ public class Health : MonoBehaviour
 
         currentHealth -= damage;
         currentHealth = Mathf.Max(currentHealth, 0); // Ensures health doesn't go negative
+        OnHealthChanged?.Invoke(currentHealth); // Notify UI or effects
 
         if (currentHealth <= 0)
         {
@@ -42,17 +49,33 @@ public class Health : MonoBehaviour
     {
         Debug.Log(gameObject.name + " has died!");
 
-        if (gameObject.CompareTag("Player")) // Check if the dead object is the player
+        AudioManager.Instance.PlaySFX(deathClip);
+        OnDeath?.Invoke(); // Fire death event
+
+        if (gameObject.CompareTag("Player"))
         {
-            GameManager.Instance.RespawnPlayer(gameObject);
+            PlayerController player = GetComponent<PlayerController>();
+            if (player != null && GameManager.Instance != null)
+            {
+                GameManager.Instance.PlayerDied(player.playerNumber);
+            }
         }
-        else
-        {
-            Destroy(gameObject); // Destroy AI tanks when they die
-        }
+
+        // Delay destruction so the SFX has time to play
+        Destroy(gameObject, 0.3f); // 300 ms delay
     }
 
+
+    private IEnumerator DestroyAfterSound(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        Destroy(gameObject);
+    }
+
+
+
 }
+
 
 
 

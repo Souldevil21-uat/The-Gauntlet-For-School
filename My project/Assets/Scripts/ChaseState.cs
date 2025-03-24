@@ -3,40 +3,50 @@
 public class ChaseState : State
 {
     private float chaseSpeed;
+    private Vector3 lastKnownPosition;
+    private AIController ai; // Store AI reference
 
     public ChaseState(AIController ai) : base(ai)
     {
-        this.chaseSpeed = ai.chaseSpeed; // Ensures AI uses correct chase speed
+        this.ai = ai; // Store reference to AIController
+        this.chaseSpeed = ai.chaseSpeed;
     }
 
     // Called when the AI enters the chase state
     public override void Enter()
     {
-        // AI is now actively pursuing the player
+        if (ai.player != null)
+        {
+            lastKnownPosition = ai.player.transform.position;
+        }
     }
 
     // Continuously executes while AI is in the chase state
     public override void Execute(AIController ai)
     {
-        // If AI loses sight of the player, determine the next action
-        if (!ai.CanSeePlayer())
+        if (ai.player == null)
         {
-            // If AI can still hear the player, maintain movement but adjust its reaction
-            if (ai.CanHearPlayer())
-            {
-                return; // AI will continue chasing based on hearing, but without stopping
-            }
-
-            // If the player is neither seen nor heard, return to patrol
             ai.ChangeState(new PatrolState(ai));
             return;
         }
 
-        // Ensure AI rotates towards the player before moving
-        ai.RotateTowards(ai.player.transform.position);
-
-        // Ensure AI moves at the designated chase speed
-        ai.MoveTowards(ai.player.transform.position, chaseSpeed);
+        // If AI can see the player, chase them directly
+        if (ai.CanSeePlayer())
+        {
+            lastKnownPosition = ai.player.transform.position;
+            ai.RotateTowards(lastKnownPosition);
+            ai.MoveTowards(lastKnownPosition, chaseSpeed);
+        }
+        // If AI can't see the player but can hear them, move towards the last heard position
+        else if (ai.CanHearPlayer())
+        {
+            ai.MoveTowards(lastKnownPosition, chaseSpeed);
+        }
+        // If AI can neither see nor hear the player, return to patrol
+        else
+        {
+            ai.ChangeState(new PatrolState(ai));
+        }
     }
 
     // Called when the AI exits the chase state
@@ -45,6 +55,8 @@ public class ChaseState : State
         // No additional exit behavior required
     }
 }
+
+
 
 
 

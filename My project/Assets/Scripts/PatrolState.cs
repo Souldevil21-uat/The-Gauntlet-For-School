@@ -24,7 +24,11 @@ public class PatrolState : State
     public override void Execute(AIController ai)
     {
         // If no waypoint exists, AI remains idle
-        if (targetWaypoint == null) return;
+        if (targetWaypoint == null)
+        {
+            GetNextWaypoint(); // Retry finding a waypoint
+            return;
+        }
 
         // Move AI towards the patrol waypoint
         ai.MoveTowards(targetWaypoint.position, ai.patrolSpeed);
@@ -32,11 +36,15 @@ public class PatrolState : State
         // Check if AI reached the waypoint
         if (Vector3.Distance(ai.transform.position, targetWaypoint.position) < 1f)
         {
-            // Fetch the next patrol point
             GetNextWaypoint();
         }
 
-        // If AI sees the player, switch state
+        // Handle AI state transitions
+        CheckForPlayer(ai);
+    }
+
+    private void CheckForPlayer(AIController ai)
+    {
         if (ai.CanSeePlayer())
         {
             if (ai is AIPatrolChase)
@@ -60,10 +68,16 @@ public class PatrolState : State
         {
             targetWaypoint = fleeAI.GetNextPatrolPoint();
         }
+
+        if (targetWaypoint == null)
+        {
+            Debug.LogWarning(aiController.name + " has no patrol points assigned.");
+        }
     }
 
     public override void Exit() { }
 }
+
 
 
 

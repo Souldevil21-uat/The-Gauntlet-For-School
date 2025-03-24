@@ -6,8 +6,39 @@ public class Powerup : MonoBehaviour
     public enum PowerupType { SpeedBoost, HealthPickup, DamageBoost }
     public PowerupType type;
     public float duration = 5f; // Only for temporary boosts
+
     private Transform spawnPoint;
     private float respawnTime;
+    private Collider powerupCollider; // Cache Collider for disabling
+    public AudioClip pickupClip;
+
+    private void Start()
+    {
+        powerupCollider = GetComponent<Collider>();
+        SetColorByType();
+    }
+    private void SetColorByType()
+    {
+        Renderer rend = GetComponent<Renderer>();
+        if (rend == null) return;
+
+        Color color = Color.white;
+
+        switch (type)
+        {
+            case PowerupType.SpeedBoost:
+                color = Color.green;
+                break;
+            case PowerupType.HealthPickup:
+                color = Color.red;
+                break;
+            case PowerupType.DamageBoost:
+                color = Color.yellow;
+                break;
+        }
+
+        rend.material.color = color;
+    }
 
     public void SetRespawn(Transform spawn, float time)
     {
@@ -22,7 +53,10 @@ public class Powerup : MonoBehaviour
         if (tank != null)
         {
             ApplyEffect(tank);
-            GameManager.Instance.StartPowerupRespawn(this);
+            AudioManager.Instance.PlaySFX(pickupClip); 
+            powerupCollider.enabled = false;
+            gameObject.SetActive(false);
+            GameManager.Instance?.StartPowerupRespawn(this);
         }
     }
 
@@ -40,7 +74,6 @@ public class Powerup : MonoBehaviour
                 StartCoroutine(DamageBoost(tank));
                 break;
         }
-        gameObject.SetActive(false); // ✅ Now it's safe to deactivate!
     }
 
     private IEnumerator SpeedBoost(TankPawn tank)
@@ -69,7 +102,14 @@ public class Powerup : MonoBehaviour
             playerController.projectileDamage -= 10f;
         }
     }
+
+    public void ResetPowerup()
+    {
+        powerupCollider.enabled = true; // Re-enable collider
+        gameObject.SetActive(true); // Reactivate powerup
+    }
 }
+
 
 
 

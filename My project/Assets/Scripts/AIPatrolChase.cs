@@ -9,21 +9,45 @@ public class AIPatrolChase : AIController
 
     protected override void Start()
     {
+      
         base.Start();
+        player = GameObject.FindWithTag("Player"); // Finds player automatically
 
         // Ensure AI has patrol points before starting patrol
         if (patrolPoints == null || patrolPoints.Count == 0)
         {
-            return; // No patrol points available, AI remains idle
+            Debug.LogWarning("❗ AIPatrolChase: No patrol points assigned!");
+            return; // AI remains idle if no waypoints exist
         }
 
         ChangeState(new PatrolState(this)); // Start in patrol mode
     }
 
+    protected override void Update()
+    {
+        base.Update();
+
+        // If AI sees the player, switch to chase mode
+        if (CanSeePlayer() && !(currentState is ChaseState))
+        {
+            ChangeState(new ChaseState(this));
+        }
+
+        // If AI loses sight of player, return to patrol after delay
+        if (!CanSeePlayer() && currentState is ChaseState)
+        {
+            Invoke(nameof(ReturnToPatrol), 3f); // Give AI 3 seconds before returning to patrol
+        }
+    }
+
     // Handles state transitions
     public override void ChangeState(State newState)
     {
-        if (currentState != null) currentState.Exit();
+        if (currentState != null)
+        {
+            currentState.Exit();
+        }
+
         currentState = newState;
         currentState.Enter();
     }
@@ -33,14 +57,22 @@ public class AIPatrolChase : AIController
     {
         if (patrolPoints == null || patrolPoints.Count == 0) return null;
 
-        // If loopPatrol is false and AI reached the last waypoint, stop patrol
-        if (!loopPatrol && currentPatrolIndex >= patrolPoints.Count - 1)
+        // Stops patrolling if `loopPatrol` is false and AI reached last point
+        if (!loopPatrol && currentPatrolIndex >= patrolPoints.Count)
         {
             return null;
         }
 
         Transform nextPoint = patrolPoints[currentPatrolIndex];
-        currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Count; // Loop through patrol points
+
+        if (loopPatrol)
+        {
+            currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Count; // Loop patrol
+        }
+        else
+        {
+            currentPatrolIndex++; // Move to next waypoint but do not loop
+        }
 
         return nextPoint;
     }
@@ -60,6 +92,13 @@ public class AIPatrolChase : AIController
         }
 
         ChangeState(new PatrolState(this)); // Ensure AI enters patrol state
+    }
+
+    // Called when AI loses sight of the player
+    private void ReturnToPatrol()
+    {
+        if (!(currentState is ChaseState)) return; // Ensure AI was previously chasing
+        ChangeState(new PatrolState(this));
     }
 }
 

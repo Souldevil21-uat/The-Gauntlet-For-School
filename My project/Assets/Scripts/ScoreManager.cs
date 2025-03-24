@@ -1,49 +1,51 @@
-﻿using UnityEngine;
-using TMPro; // Required if using TextMeshPro for UI
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class ScoreManager : MonoBehaviour
 {
-    public static ScoreManager Instance; // Singleton instance
-    public int score = 0; // Tracks player score
-    public TextMeshProUGUI scoreText; // Reference to UI text displaying score
+    public static ScoreManager Instance { get; private set; }
+
+    private Dictionary<int, int> playerScores = new Dictionary<int, int>();
+
+    private UIManager_GameScene gameUIManager;  // ✅ Updated to UIManager_GameScene
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
         }
+
+        FindGameUIManager();
     }
 
-    public int GetScore()
+    private void FindGameUIManager()
     {
-        return score;
+        gameUIManager = FindObjectOfType<UIManager_GameScene>(); // ✅ Find the correct UI script dynamically
     }
 
-
-    public void AddScore(int points)
+    public void AddScore(int playerNumber, int score)
     {
-        score += points;
-        UIManager.Instance.UpdateScore(score); // Update UI
-    }
-
-
-    public void ResetScore()
-    {
-        score = 0;
-        UpdateScoreUI();
-    }
-
-    private void UpdateScoreUI()
-    {
-        if (scoreText != null)
+        if (!playerScores.ContainsKey(playerNumber))
         {
-            scoreText.text = "Score: " + score;
+            playerScores[playerNumber] = 0;
+        }
+
+        playerScores[playerNumber] += score;
+
+        if (gameUIManager != null)
+        {
+            gameUIManager.UpdateScore(playerNumber, playerScores[playerNumber]);
         }
     }
 }
+
+
+
+
 
