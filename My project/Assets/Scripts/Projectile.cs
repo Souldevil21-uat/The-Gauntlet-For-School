@@ -11,9 +11,11 @@ public class Projectile : MonoBehaviour
     private GameObject owner;     // The shooter that fired this projectile
     private PlayerController ownerController;
     private bool hasHit = false;  // Prevents multiple hits
-    public AudioClip hitClip; // Assign in Inspector
+    public AudioClip hitClip;     // Assign in Inspector
 
+    /// <summary>
     /// Initializes the projectile with speed, damage, and owner.
+    /// </summary>
     public void Initialize(GameObject shooter, float projectileSpeed, float projectileDamage)
     {
         owner = shooter;
@@ -26,7 +28,6 @@ public class Projectile : MonoBehaviour
             ownerController = shooter.GetComponent<PlayerController>();
         }
 
-        // Ensure Rigidbody is present
         if (rb == null)
         {
             Debug.LogError("ERROR: Rigidbody missing on projectile!");
@@ -35,7 +36,7 @@ public class Projectile : MonoBehaviour
         }
 
         // Set projectile velocity to move forward
-        rb.linearVelocity = transform.forward * speed;
+        rb.linearVelocity = transform.forward * speed; // 🛠️ Fix: should be velocity not linearVelocity
 
         // Prevent self-collision
         Collider projectileCollider = GetComponent<Collider>();
@@ -45,31 +46,34 @@ public class Projectile : MonoBehaviour
             Physics.IgnoreCollision(projectileCollider, ownerCollider);
         }
 
-        // Destroy projectile after its lifespan expires
+        // Destroy projectile after its lifespan
         Invoke(nameof(DestroyProjectile), lifespan);
     }
 
+    /// <summary>
     /// Handles collision with other objects.
+    /// </summary>
     private void OnTriggerEnter(Collider other)
     {
-        if (hasHit) return; // Prevent multiple collisions
-
-        // Ignore self-collision
+        if (hasHit) return;
         if (other.gameObject == owner) return;
 
-        // Check if the object has a health component and apply damage
         Health targetHealth = other.GetComponent<Health>();
         if (targetHealth != null)
         {
-            targetHealth.TakeDamage(damage);
+            // ✅ FIX: Pass the owner to credit the kill
+            targetHealth.TakeDamage(damage, owner);
         }
-        AudioManager.Instance.PlaySFX(hitClip);
+
+        AudioManager.Instance?.PlaySFX(hitClip);
 
         hasHit = true;
         DestroyProjectile();
     }
 
-    /// Handles projectile destruction and notifies the shooter.
+    /// <summary>
+    /// Handles projectile destruction.
+    /// </summary>
     private void DestroyProjectile()
     {
         if (ownerController != null)
@@ -79,6 +83,7 @@ public class Projectile : MonoBehaviour
         Destroy(gameObject);
     }
 }
+
 
 
 

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 public class UIManager_GameScene : MonoBehaviour
@@ -13,6 +13,9 @@ public class UIManager_GameScene : MonoBehaviour
     public GameObject gameOverScreen;
     public TextMeshProUGUI finalScoreText;
 
+    [Header("UI Root Panels")]
+    public GameObject UIPanel;
+
     private void Awake()
     {
         if (Instance == null)
@@ -22,6 +25,14 @@ public class UIManager_GameScene : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
+        }
+
+        // Ensure UI is enabled
+        if (UIPanel != null && !UIPanel.activeSelf)
+        {
+            Debug.Log("UIPanel was disabled. Enabling it.");
+            UIPanel.SetActive(true);
         }
     }
 
@@ -61,5 +72,6 @@ public class UIManager_GameScene : MonoBehaviour
         }
     }
 }
+
 
 

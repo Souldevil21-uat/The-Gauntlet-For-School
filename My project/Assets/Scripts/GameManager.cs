@@ -194,6 +194,10 @@ public class GameManager : MonoBehaviour
         RegisterPlayer(player1Controller);
         Debug.Log("Player 1 Spawned!");
 
+        // 👇 Update UI for Player 1
+        ScoreManager.Instance.AddScore(1, 0); // triggers initial score update
+        UIManager_GameScene.Instance.UpdateLives(1, player1Lives);
+
         // Spawn Player 2 if Two Player Mode is Enabled
         if (isTwoPlayer)
         {
@@ -205,6 +209,10 @@ public class GameManager : MonoBehaviour
             player2Controller.playerNumber = 2;
             RegisterPlayer(player2Controller);
             Debug.Log("Player 2 Spawned!");
+
+            // 👇 Update UI for Player 2
+            ScoreManager.Instance.AddScore(2, 0);
+            UIManager_GameScene.Instance.UpdateLives(2, player2Lives);
         }
     }
 
@@ -403,23 +411,35 @@ public class GameManager : MonoBehaviour
 
         Transform spawnPoint = (playerNumber == 1) ? playerSpawnPoints[0] : playerSpawnPoints[1];
 
-        if (spawnPoint == null)
-        {
-            Debug.LogError($"Spawn point for Player {playerNumber} is missing!");
-            return;
-        }
-
         GameObject player = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
         PlayerController playerController = player.GetComponent<PlayerController>();
         playerController.playerNumber = playerNumber;
         RegisterPlayer(playerController);
+
+        
+        if (playerNumber == 1) player1 = player;
+        else if (playerNumber == 2) player2 = player;
+
+        // ✅ Update UI and score
+        int lives = (playerNumber == 1) ? player1Lives : player2Lives;
+        UIManager_GameScene.Instance.UpdateLives(playerNumber, lives);
+        ScoreManager.Instance.AddScore(playerNumber, 0);
+
+        // ✅ Refresh camera
+        CameraManager.Instance.UpdateCameraMode();
+
         Debug.Log($"Player {playerNumber} respawned!");
     }
+
 
     public void PlayerDied(int playerNumber)
     {
         if (playerNumber == 1) player1Lives--;
         else if (playerNumber == 2) player2Lives--;
+
+        
+        UIManager_GameScene.Instance.UpdateLives(playerNumber,
+            playerNumber == 1 ? player1Lives : player2Lives);
 
         if (player1Lives <= 0 && player2Lives <= 0)
         {
@@ -434,6 +454,7 @@ public class GameManager : MonoBehaviour
             RespawnPlayer(2);
         }
     }
+
 
     public void StartPowerupRespawn(Powerup powerup)
     {

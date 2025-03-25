@@ -180,6 +180,8 @@ MonoBehaviour:
   maxHealth: 100
   currentHealth: 100
   deathClip: {fileID: 8300000, guid: b9d273c8aecc87e4d800266b77984660, type: 3}
+  healthBarPrefab: {fileID: 2147978033471897224, guid: 72f68da41fb6b9441997a4038e628470, type: 3}
+  pointsForKill: 100
 --- !u!65 &-579889016201949593
 BoxCollider:
   m_ObjectHideFlags: 0

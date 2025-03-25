@@ -81,22 +81,33 @@ public class CameraManager : MonoBehaviour
         // Find Player 1
         if (GameManager.Instance.player1 != null)
         {
-            player1Target = GameManager.Instance.player1.transform;
-            Debug.Log("🎯 Player 1 Target Updated: " + player1Target.name);
+            Transform newTarget = GameManager.Instance.player1.transform;
+
+            if (player1Target != newTarget)
+            {
+                player1Target = newTarget;
+                Debug.Log("🎯 Player 1 Target Updated: " + player1Target.name);
+            }
         }
 
         // Find Player 2 (Check for clones dynamically)
-        GameObject activePlayer2 = GameObject.FindWithTag("Player 2"); // Find active player 2
+        GameObject activePlayer2 = GameObject.FindWithTag("Player 2");
         if (activePlayer2 != null)
         {
-            player2Target = activePlayer2.transform;
-            Debug.Log("🎯 Player 2 Target Updated: " + player2Target.name);
+            Transform newTarget = activePlayer2.transform;
+
+            if (player2Target != newTarget)
+            {
+                player2Target = newTarget;
+                Debug.Log("🎯 Player 2 Target Updated: " + player2Target.name);
+            }
         }
         else
         {
             Debug.LogWarning("⚠️ No Active Player 2 Found! Split-screen camera might be broken.");
         }
     }
+
 
 
     private void FollowPlayers()
