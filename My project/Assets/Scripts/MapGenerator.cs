@@ -3,15 +3,19 @@ using UnityEngine;
 
 public class MapGenerator : MonoBehaviour
 {
+    // Controls how the random seed is chosen for generation
     public enum SeedType { Preset, Random, LevelOfTheDay }
+
     [Header("Seed Settings")]
-    public SeedType seedMode = SeedType.Preset;
-    public int presetSeed = 0;
+    public SeedType seedMode = SeedType.Preset; // Method to determine random seed
+    public int presetSeed = 0; // Seed value used when SeedType is Preset
 
     [Header("Map Settings")]
     public int rows = 5;
     public int cols = 5;
     public float tileSize = 10f;
+    public Transform playerSpawn1; // Used for avoiding obstacle spawning
+    public Transform playerSpawn2;
 
     [Header("Prefabs")]
     public GameObject floorTilePrefab;
@@ -20,12 +24,20 @@ public class MapGenerator : MonoBehaviour
     public GameObject aiSpawnPrefab;
     public GameObject playerSpawnPrefab;
     public GameObject powerupSpawnPrefab;
+
+    [Header("Obstacle Settings")]
+    public GameObject[] obstaclePrefabs;
+    public int numberOfObstacles = 30;
+    public float obstacleSpacing = 1f;
+    public float obstacleMinDistanceFromPlayers = 3f;
+
     [Header("Wall Prefab")]
     public GameObject wallPrefab;
-    private GameObject[,] grid;
-    [Header("Map Segments")]
-    public GameObject[] mapSegments; // Floor tiles to choose from
 
+    private GameObject[,] grid; // Stores the floor grid
+
+    [Header("Map Segments")]
+    public GameObject[] mapSegments; // List of randomizable floor tiles
 
     void Start()
     {
@@ -35,17 +47,50 @@ public class MapGenerator : MonoBehaviour
     public void GenerateMap()
     {
         SetSeed();
-
         grid = new GameObject[rows, cols];
-
         GenerateFloor();
         GenerateOuterWalls();
         PlaceDoors();
         PlaceSpawnPoints();
+        SpawnObstacles();
+    }
+
+    void SpawnObstacles()
+    {
+        int spawned = 0;
+        int attempts = 0;
+        int maxAttempts = numberOfObstacles * 10;
+
+        while (spawned < numberOfObstacles && attempts < maxAttempts)
+        {
+            attempts++;
+
+            // Pick a random tile in grid space
+            float x = Random.Range(0, cols);
+            float z = Random.Range(0, rows);
+
+            float xOffset = (cols - 1) / 2f * tileSize;
+            float zOffset = (rows - 1) / 2f * tileSize;
+
+            Vector3 position = new Vector3(x * tileSize - xOffset, 1f, z * tileSize - zOffset);
+
+            // Don't spawn too close to player spawns
+            if (Vector3.Distance(position, playerSpawn1.position) < obstacleMinDistanceFromPlayers ||
+                Vector3.Distance(position, playerSpawn2.position) < obstacleMinDistanceFromPlayers)
+            {
+                continue;
+            }
+
+            // Pick a random obstacle prefab and instantiate it
+            GameObject prefab = obstaclePrefabs[Random.Range(0, obstaclePrefabs.Length)];
+            Instantiate(prefab, position, Quaternion.identity, transform);
+            spawned++;
+        }
     }
 
     void SetSeed()
     {
+        // Choose and apply a seed based on selected method
         switch (seedMode)
         {
             case SeedType.Preset:
@@ -73,6 +118,7 @@ public class MapGenerator : MonoBehaviour
         float xOffset = (rows - 1) / 2f * tileSize;
         float zOffset = (cols - 1) / 2f * tileSize;
 
+        // Create floor tiles with random segment prefabs
         for (int x = 0; x < rows; x++)
         {
             for (int y = 0; y < cols; y++)
@@ -95,10 +141,10 @@ public class MapGenerator : MonoBehaviour
         float halfWidth = (cols * tileSize) / 2f;
         float halfHeight = (rows * tileSize) / 2f;
 
-        Quaternion horizontalRot = Quaternion.Euler(0, 90, 0); // For top & bottom
-        Quaternion verticalRot = Quaternion.identity;          // For left & right
+        Quaternion horizontalRot = Quaternion.Euler(0, 90, 0);
+        Quaternion verticalRot = Quaternion.identity;
 
-        // 🔹 Top & Bottom walls
+        // Top and bottom rows
         for (int x = 0; x < cols; x++)
         {
             float xPos = (x * tileSize) - halfWidth + tileSize / 2f;
@@ -110,7 +156,7 @@ public class MapGenerator : MonoBehaviour
             Instantiate(wallPrefab, bottomPos, horizontalRot, transform);
         }
 
-        // 🔹 Left & Right walls
+        // Left and right columns
         for (int y = 0; y < rows; y++)
         {
             float zPos = (y * tileSize) - halfHeight + tileSize / 2f;
@@ -123,10 +169,6 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
-
-
-
-
     void PlaceDoors()
     {
         if (doorPrefab == null) return;
@@ -136,11 +178,15 @@ public class MapGenerator : MonoBehaviour
             for (int y = 0; y < cols; y++)
             {
                 Vector3 tilePosition = grid[x, y].transform.position;
+
+                // Place horizontal door between tiles (x direction)
                 if (x < rows - 1)
                 {
                     Vector3 doorPos = tilePosition + new Vector3(tileSize / 2, 0, 0);
                     Instantiate(doorPrefab, doorPos, Quaternion.Euler(0, 90, 0), transform);
                 }
+
+                // Place vertical door between tiles (y direction)
                 if (y < cols - 1)
                 {
                     Vector3 doorPos = tilePosition + new Vector3(0, 0, tileSize / 2);
@@ -153,6 +199,8 @@ public class MapGenerator : MonoBehaviour
     void PlaceSpawnPoints()
     {
         List<Vector2Int> availableTiles = new List<Vector2Int>();
+
+        // Track all floor grid positions
         for (int x = 0; x < rows; x++)
         {
             for (int y = 0; y < cols; y++)
@@ -164,18 +212,21 @@ public class MapGenerator : MonoBehaviour
             }
         }
 
+        // Place 4 AI spawn points
         for (int i = 0; i < 4 && availableTiles.Count > 0; i++)
         {
             Vector2Int pos = GetRandomTile(availableTiles);
             PlaceSpawn(aiSpawnPrefab, pos);
         }
 
+        // Place one player spawn
         if (availableTiles.Count > 0)
         {
             Vector2Int pos = GetRandomTile(availableTiles);
             PlaceSpawn(playerSpawnPrefab, pos);
         }
 
+        // Place several powerup spawns
         int powerupCount = Mathf.Max(3, rows * cols / 5);
         for (int i = 0; i < powerupCount && availableTiles.Count > 0; i++)
         {
@@ -184,6 +235,7 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
+    // Instantiates a spawnable prefab at a grid tile
     void PlaceSpawn(GameObject prefab, Vector2Int gridPos)
     {
         if (prefab == null || grid[gridPos.x, gridPos.y] == null) return;
@@ -191,6 +243,7 @@ public class MapGenerator : MonoBehaviour
         Instantiate(prefab, pos, Quaternion.identity);
     }
 
+    // Selects and removes a random tile from the list
     Vector2Int GetRandomTile(List<Vector2Int> tiles)
     {
         int index = Random.Range(0, tiles.Count);
@@ -199,7 +252,6 @@ public class MapGenerator : MonoBehaviour
         return pos;
     }
 }
-
 
 
 

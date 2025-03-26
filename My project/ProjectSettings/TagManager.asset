@@ -12,6 +12,7 @@ TagManager:
   - PlayerSpawn
   - Waypoint
   - PowerupSpawn
+  - Obstacle
   layers:
   - Default
   - TransparentFX

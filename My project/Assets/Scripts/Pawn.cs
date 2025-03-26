@@ -6,7 +6,7 @@ public class Pawn : MonoBehaviour
     public float moveSpeed = 10f;   // Default movement speed
     public float rotateSpeed = 50f; // Default rotation speed
 
-    protected Rigidbody rb; // Reference to Rigidbody component
+    public Rigidbody rb; // Reference to Rigidbody component
 
     protected virtual void Start()
     {

@@ -424,6 +424,7 @@
 "Assets/Scripts/Health.cs"
 "Assets/Scripts/HealthBar.cs"
 "Assets/Scripts/MapGenerator.cs"
+"Assets/Scripts/MapSettingsManager.cs"
 "Assets/Scripts/Movement.cs"
 "Assets/Scripts/OptionsMenu.cs"
 "Assets/Scripts/PatrolState.cs"

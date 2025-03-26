@@ -3,20 +3,23 @@ using System.Collections;
 
 public class Powerup : MonoBehaviour
 {
-    public enum PowerupType { SpeedBoost, HealthPickup, DamageBoost }
+    // Define types of powerups
+    public enum PowerupType { SpeedBoost, HealthPickup, DamageBoost, AddScore }
     public PowerupType type;
-    public float duration = 5f; // Only for temporary boosts
+    public float duration = 5f; // Duration for temporary effects like speed or damage boost
 
-    private Transform spawnPoint;
-    private float respawnTime;
-    private Collider powerupCollider; // Cache Collider for disabling
-    public AudioClip pickupClip;
+    private Transform spawnPoint; // Reference to the spawn location for respawning
+    private float respawnTime; // Time until the powerup respawns
+    private Collider powerupCollider; // Cached reference to collider for enabling/disabling
+    public AudioClip pickupClip; // Sound played when powerup is picked up
 
     private void Start()
     {
-        powerupCollider = GetComponent<Collider>();
-        SetColorByType();
+        powerupCollider = GetComponent<Collider>(); // Get and store the collider component
+        SetColorByType(); // Set powerup color based on type
     }
+
+    // Changes the material color based on powerup type
     private void SetColorByType()
     {
         Renderer rend = GetComponent<Renderer>();
@@ -40,26 +43,38 @@ public class Powerup : MonoBehaviour
         rend.material.color = color;
     }
 
+    // Called by the spawner to track its location and respawn delay
     public void SetRespawn(Transform spawn, float time)
     {
         spawnPoint = spawn;
         respawnTime = time;
     }
 
+    // Detect when a tank touches the powerup
     private void OnTriggerEnter(Collider other)
     {
         TankPawn tank = other.GetComponent<TankPawn>();
 
+        // Ensure only player-controlled tanks can pick up powerups
         if (tank != null)
         {
+            PlayerController playerController = tank.GetComponent<PlayerController>();
+            if (playerController == null)
+            {
+                // This tank is not player-controlled (likely AI), ignore
+                return;
+            }
+
             ApplyEffect(tank);
-            AudioManager.Instance.PlaySFX(pickupClip); 
+            AudioManager.Instance.PlaySFX(pickupClip);
             powerupCollider.enabled = false;
             gameObject.SetActive(false);
             GameManager.Instance?.StartPowerupRespawn(this);
         }
     }
 
+
+    // Applies the appropriate effect to the tank
     private void ApplyEffect(TankPawn tank)
     {
         switch (type)
@@ -73,9 +88,22 @@ public class Powerup : MonoBehaviour
             case PowerupType.DamageBoost:
                 StartCoroutine(DamageBoost(tank));
                 break;
+            case PowerupType.AddScore:
+                AddScore(tank);
+                break;
+
+        }
+    }
+    private void AddScore(TankPawn tank)
+    {
+        PlayerController pc = tank.GetComponent<PlayerController>();
+        if (pc != null)
+        {
+            ScoreManager.Instance.AddScore(pc.playerNumber, 100); // Add 100 points
         }
     }
 
+    // Temporarily increases tank movement speed
     private IEnumerator SpeedBoost(TankPawn tank)
     {
         tank.moveSpeed += 5f;
@@ -83,6 +111,7 @@ public class Powerup : MonoBehaviour
         tank.moveSpeed -= 5f;
     }
 
+    // Heals the tank by a set amount, up to the max health
     private void HealTank(TankPawn tank)
     {
         Health health = tank.GetComponent<Health>();
@@ -92,6 +121,7 @@ public class Powerup : MonoBehaviour
         }
     }
 
+    // Temporarily increases projectile damage for the player
     private IEnumerator DamageBoost(TankPawn tank)
     {
         PlayerController playerController = tank.GetComponent<PlayerController>();
@@ -103,12 +133,14 @@ public class Powerup : MonoBehaviour
         }
     }
 
+    // Reactivate the powerup and re-enable its collider
     public void ResetPowerup()
     {
-        powerupCollider.enabled = true; // Re-enable collider
-        gameObject.SetActive(true); // Reactivate powerup
+        powerupCollider.enabled = true;
+        gameObject.SetActive(true);
     }
 }
+
 
 
 

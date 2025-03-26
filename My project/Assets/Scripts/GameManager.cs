@@ -2,11 +2,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using TMPro;
 
 public class GameManager : MonoBehaviour
 {
+    // Singleton reference
     public static GameManager Instance { get; private set; }
+
+    // States the game can be in
     public enum GameState { MainMenu, OptionsMenu, InitGame, PlayGame, GameOver }
     public GameState currentState;
 
@@ -20,6 +24,7 @@ public class GameManager : MonoBehaviour
     public List<GameObject> aiTankPrefabs;
     public List<Transform> aiSpawnPoints;
     private List<GameObject> spawnedAI = new List<GameObject>();
+    [SerializeField] private int initialAITankCount = 6;
 
     [Header("Powerup Management")]
     public List<Transform> powerupSpawnPoints;
@@ -37,7 +42,6 @@ public class GameManager : MonoBehaviour
 
     private UIManager_GameScene gameUIManager;
 
-    // References to active player objects
     public GameObject player1 { get; private set; }
     public GameObject player2 { get; private set; }
 
@@ -62,66 +66,80 @@ public class GameManager : MonoBehaviour
     {
         FindGameUIManager();
         ChangeState(GameState.MainMenu);
-        Debug.Log("GameManager Started");
     }
 
+    // Handles transitions between game states
     public void ChangeState(GameState newState)
     {
         if (currentState == newState)
         {
-            Debug.LogWarning($"Game is already in {newState} state. Ignoring request.");
+            Debug.LogWarning($"Game is already in {newState} state.");
             return;
         }
 
-        Debug.Log($"Changing Game State: {currentState} ➡ {newState}");
         currentState = newState;
 
         switch (newState)
         {
             case GameState.MainMenu:
-                Debug.Log("Loading Main Menu...");
                 SceneManager.LoadScene("StartScene");
                 break;
-
             case GameState.OptionsMenu:
-                Debug.Log("Loading Options Menu...");
                 SceneManager.LoadScene("OptionScene");
                 break;
-
             case GameState.InitGame:
-                Debug.Log("Initializing Game...");
                 StartCoroutine(InitializeGame());
                 break;
-
             case GameState.PlayGame:
-                Debug.Log("Game Started!");
                 break;
-
             case GameState.GameOver:
-                Debug.Log("Game Over triggered.");
                 ShowGameOverScreen();
                 break;
         }
     }
 
-
-    private IEnumerator InitializeGame()
+    // Finds the game UI manager and links important UI elements
+    private void FindGameUIManager()
     {
-        Debug.Log("Initializing Game...");
+        gameUIManager = FindObjectOfType<UIManager_GameScene>();
 
-        // ✅ Load scene asynchronously so we can wait for it to finish
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("Main Game");
-
-        // Wait until the scene is done loading
-        while (!asyncLoad.isDone)
+        GameObject goUI = FindInactiveObject("GameOverScreen");
+        if (goUI != null)
         {
-            yield return null;
+            gameOverScreen = goUI;
+            gameOverScreen.SetActive(false);
         }
 
-        // ✅ Wait an extra frame just to ensure objects are initialized
+        TextMeshProUGUI finalScore = FindInactiveObject("Final Score")?.GetComponent<TextMeshProUGUI>();
+        if (finalScore != null)
+        {
+            finalScoreText = finalScore;
+        }
+    }
+
+
+    private GameObject FindInactiveObject(string name)
+    {
+        Transform[] objs = Resources.FindObjectsOfTypeAll<Transform>();
+        foreach (Transform obj in objs)
+        {
+            if (obj.hideFlags == HideFlags.None && obj.name == name)
+            {
+                return obj.gameObject;
+            }
+        }
+        return null;
+    }
+
+
+    // Loads scene and sets up player, AI, and powerups
+    private IEnumerator InitializeGame()
+    {
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("Main Game");
+        while (!asyncLoad.isDone) yield return null;
         yield return null;
 
-        // ✅ Re-apply saved volume settings after scene is loaded
+        // Apply saved audio settings
         float sfxVol = PlayerPrefs.GetFloat("SFXVolume", 1f);
         float musicVol = PlayerPrefs.GetFloat("MusicVolume", 1f);
 
@@ -130,37 +148,21 @@ public class GameManager : MonoBehaviour
             AudioManager.Instance.SetSFXVolume(sfxVol);
             AudioManager.Instance.SetMusicVolume(musicVol);
         }
-        else
-        {
-            Debug.LogWarning("AudioManager not found in Game Scene!");
-        }
 
-        // ✅ Now everything in the scene is ready
         FindGameUIManager();
 
-        // 🔹 Find Player Spawn Points
-        GameObject[] playerSpawnObjects = GameObject.FindGameObjectsWithTag("PlayerSpawn");
-        playerSpawnPoints = new List<Transform>();
-        foreach (GameObject obj in playerSpawnObjects)
-        {
+        // Collect spawn point references
+        playerSpawnPoints = new List<Transform>(GameObject.FindGameObjectsWithTag("PlayerSpawn").Length);
+        foreach (var obj in GameObject.FindGameObjectsWithTag("PlayerSpawn"))
             playerSpawnPoints.Add(obj.transform);
-        }
 
-        // 🔹 Find AI Spawn Points
-        GameObject[] aiSpawnObjects = GameObject.FindGameObjectsWithTag("AI Spawn Point");
-        aiSpawnPoints = new List<Transform>();
-        foreach (GameObject obj in aiSpawnObjects)
-        {
+        aiSpawnPoints = new List<Transform>(GameObject.FindGameObjectsWithTag("AI Spawn Point").Length);
+        foreach (var obj in GameObject.FindGameObjectsWithTag("AI Spawn Point"))
             aiSpawnPoints.Add(obj.transform);
-        }
 
-        // 🔹 Find Powerup Spawn Points
-        GameObject[] powerupSpawnObjects = GameObject.FindGameObjectsWithTag("PowerupSpawn");
-        powerupSpawnPoints = new List<Transform>();
-        foreach (GameObject obj in powerupSpawnObjects)
-        {
+        powerupSpawnPoints = new List<Transform>(GameObject.FindGameObjectsWithTag("PowerupSpawn").Length);
+        foreach (var obj in GameObject.FindGameObjectsWithTag("PowerupSpawn"))
             powerupSpawnPoints.Add(obj.transform);
-        }
 
         ApplyTwoPlayerMode();
         SpawnPlayers();
@@ -168,83 +170,63 @@ public class GameManager : MonoBehaviour
         SpawnPowerups();
 
         CameraManager.Instance.UpdateCameraMode();
-
         ChangeState(GameState.PlayGame);
     }
 
 
-
-
-
+    // Spawns player tanks based on mode
     public void SpawnPlayers()
     {
         bool isTwoPlayer = PlayerPrefs.GetInt("TwoPlayerMode", 0) == 1;
 
         if (playerPrefab == null || playerSpawnPoints.Count < 2)
         {
-            Debug.LogError("Not enough player spawn points or missing player prefab!");
+            Debug.LogError("Missing player prefab or spawn points.");
             return;
         }
 
-        // Spawn Player 1
+        // Player 1 spawn
         Transform spawn1 = playerSpawnPoints[0];
         player1 = Instantiate(playerPrefab, spawn1.position, spawn1.rotation);
-        PlayerController player1Controller = player1.GetComponent<PlayerController>();
-        player1Controller.playerNumber = 1;
-        RegisterPlayer(player1Controller);
-        Debug.Log("Player 1 Spawned!");
-
-        // 👇 Update UI for Player 1
-        ScoreManager.Instance.AddScore(1, 0); // triggers initial score update
+        PlayerController pc1 = player1.GetComponent<PlayerController>();
+        pc1.playerNumber = 1;
+        RegisterPlayer(pc1);
         UIManager_GameScene.Instance.UpdateLives(1, player1Lives);
+        ScoreManager.Instance.AddScore(1, 0);
 
-        // Spawn Player 2 if Two Player Mode is Enabled
+        // Player 2 spawn if enabled
         if (isTwoPlayer)
         {
             Transform spawn2 = playerSpawnPoints[1];
             player2 = Instantiate(playerPrefab, spawn2.position, spawn2.rotation);
             player2.tag = "Player 2";
 
-            PlayerController player2Controller = player2.GetComponent<PlayerController>();
-            player2Controller.playerNumber = 2;
-            RegisterPlayer(player2Controller);
-            Debug.Log("Player 2 Spawned!");
-
-            // 👇 Update UI for Player 2
-            ScoreManager.Instance.AddScore(2, 0);
+            PlayerController pc2 = player2.GetComponent<PlayerController>();
+            pc2.playerNumber = 2;
+            RegisterPlayer(pc2);
             UIManager_GameScene.Instance.UpdateLives(2, player2Lives);
+            ScoreManager.Instance.AddScore(2, 0);
         }
     }
 
+    // Spawns AI tanks using a variety of types
     public void SpawnAI()
     {
         if (aiTankPrefabs.Count == 0 || aiSpawnPoints.Count == 0)
         {
-            Debug.LogWarning("Missing AI tank prefabs or spawn points.");
+            Debug.LogWarning("Missing AI prefabs or spawn points.");
             return;
-        }
-
-        void ShuffleList<T>(List<T> list)
-        {
-            for (int i = 0; i < list.Count; i++)
-            {
-                int rand = Random.Range(i, list.Count);
-                T temp = list[i];
-                list[i] = list[rand];
-                list[rand] = temp;
-            }
         }
 
         List<GameObject> guaranteed = new List<GameObject>();
         HashSet<System.Type> addedTypes = new HashSet<System.Type>();
 
-        // 🔹 Guarantee one of each AI type
-        foreach (GameObject prefab in aiTankPrefabs)
+        // Ensure each AI type appears at least once
+        foreach (var prefab in aiTankPrefabs)
         {
-            AIController controller = prefab.GetComponent<AIController>();
+            var controller = prefab.GetComponent<AIController>();
             if (controller == null) continue;
-
-            System.Type type = controller.GetType();
+            var type = controller.GetType();
             if (!addedTypes.Contains(type))
             {
                 guaranteed.Add(prefab);
@@ -252,50 +234,37 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // 🔹 Shuffle extra prefabs
+        // Fill with extras up to max allowed
         List<GameObject> extras = new List<GameObject>(aiTankPrefabs);
         ShuffleList(extras);
-
-        // 🔹 Fill up to max (but not more than spawn points)
-        int maxSpawn = Mathf.Min(4, aiSpawnPoints.Count); // Or raise 4 if needed
+        int maxSpawn = Mathf.Min(8, aiSpawnPoints.Count);
         while (guaranteed.Count < maxSpawn)
         {
             GameObject extra = extras[Random.Range(0, extras.Count)];
             guaranteed.Add(extra);
         }
 
-        // 🔹 Shuffle spawn points
-        List<Transform> shuffledSpawnPoints = new List<Transform>(aiSpawnPoints);
-        ShuffleList(shuffledSpawnPoints);
+        // Shuffle and spawn
+        List<Transform> shuffledSpawns = new List<Transform>(aiSpawnPoints);
+        ShuffleList(shuffledSpawns);
 
-        // 🔹 Spawn each AI at a shuffled spawn point
         for (int i = 0; i < guaranteed.Count; i++)
         {
-            GameObject aiTank = Instantiate(guaranteed[i], shuffledSpawnPoints[i].position, shuffledSpawnPoints[i].rotation);
+            GameObject aiTank = Instantiate(guaranteed[i], shuffledSpawns[i].position, shuffledSpawns[i].rotation);
             AIController aiController = aiTank.GetComponent<AIController>();
-
-            if (aiController == null)
-            {
-                Debug.LogError("Spawned AI tank missing AIController!");
-                continue;
-            }
 
             if (aiController is AIPatrolChase patrolAI)
             {
-                patrolAI.patrolPoints = new List<Transform>();
-                foreach (GameObject wp in GameObject.FindGameObjectsWithTag("Waypoint"))
-                {
+                patrolAI.patrolPoints = new List<Transform>(GameObject.FindGameObjectsWithTag("Waypoint").Length);
+                foreach (var wp in GameObject.FindGameObjectsWithTag("Waypoint"))
                     patrolAI.patrolPoints.Add(wp.transform);
-                }
                 ShuffleList(patrolAI.patrolPoints);
             }
             else if (aiController is AIFlee fleeAI)
             {
-                fleeAI.patrolPoints = new List<Transform>();
-                foreach (GameObject wp in GameObject.FindGameObjectsWithTag("Waypoint"))
-                {
+                fleeAI.patrolPoints = new List<Transform>(GameObject.FindGameObjectsWithTag("Waypoint").Length);
+                foreach (var wp in GameObject.FindGameObjectsWithTag("Waypoint"))
                     fleeAI.patrolPoints.Add(wp.transform);
-                }
                 ShuffleList(fleeAI.patrolPoints);
             }
 
@@ -303,8 +272,92 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Respawn a new AI tank after a delay
+    public void RespawnAIWithDelay(float delay)
+    {
+        StartCoroutine(RespawnAIAfterDelay(delay));
+    }
 
-    // Utility method to shuffle a list
+    private IEnumerator RespawnAIAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (aiTankPrefabs.Count == 0 || aiSpawnPoints.Count == 0)
+            yield break;
+
+        GameObject prefab = aiTankPrefabs[Random.Range(0, aiTankPrefabs.Count)];
+        Transform spawnPoint = aiSpawnPoints[Random.Range(0, aiSpawnPoints.Count)];
+
+        GameObject aiTank = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
+        AIController aiController = aiTank.GetComponent<AIController>();
+
+        if (aiController is AIPatrolChase patrolAI)
+        {
+            patrolAI.patrolPoints = new List<Transform>();
+            foreach (GameObject wp in GameObject.FindGameObjectsWithTag("Waypoint"))
+                patrolAI.patrolPoints.Add(wp.transform);
+        }
+        else if (aiController is AIFlee fleeAI)
+        {
+            fleeAI.patrolPoints = new List<Transform>();
+            foreach (GameObject wp in GameObject.FindGameObjectsWithTag("Waypoint"))
+                fleeAI.patrolPoints.Add(wp.transform);
+        }
+
+        RegisterAI(aiController);
+    }
+
+    // Spawns powerups at designated spawn points
+    public void SpawnPowerups()
+    {
+        foreach (Transform spawn in powerupSpawnPoints)
+        {
+            GameObject p = Instantiate(powerupPrefab, spawn.position, spawn.rotation);
+            Powerup ps = p.GetComponent<Powerup>();
+            if (ps != null)
+            {
+                ps.type = (Powerup.PowerupType)Random.Range(0, System.Enum.GetValues(typeof(Powerup.PowerupType)).Length);
+                ps.SetRespawn(spawn, powerupRespawnTime);
+            }
+        }
+    }
+
+    // Displays game over UI
+    public void ShowGameOverScreen()
+    {
+        Debug.Log($"GameOverScreen: {(gameOverScreen != null ? "Found" : "Missing")}");
+        Debug.Log($"FinalScoreText: {(finalScoreText != null ? "Found" : "Missing")}");
+        if (gameOverScreen != null)
+            gameOverScreen.SetActive(true);
+
+        if (finalScoreText != null)
+        {
+            int score = ScoreManager.Instance?.GetScore(1) ?? 0;
+            finalScoreText.text = $"Final Score: {score}";
+        }
+        else
+        {
+            Debug.LogWarning("Final Score Text is missing!");
+        }
+
+        Button restartButton = gameOverScreen?.transform.Find("Restart")?.GetComponent<Button>();
+        Button mainMenuButton = gameOverScreen?.transform.Find("MainMenu")?.GetComponent<Button>();
+
+        if (restartButton != null)
+        {
+            restartButton.onClick.RemoveAllListeners();
+            restartButton.onClick.AddListener(OnRestartButton);
+        }
+
+        if (mainMenuButton != null)
+        {
+            mainMenuButton.onClick.RemoveAllListeners();
+            mainMenuButton.onClick.AddListener(OnMainMenuButton);
+        }
+    }
+
+
+    // Utility: shuffle a list
     private void ShuffleList<T>(List<T> list)
     {
         for (int i = 0; i < list.Count; i++)
@@ -317,33 +370,7 @@ public class GameManager : MonoBehaviour
     }
 
 
-
-
-    public void SpawnPowerups()
-    {
-        foreach (Transform spawnPoint in powerupSpawnPoints)
-        {
-            GameObject powerup = Instantiate(powerupPrefab, spawnPoint.position, spawnPoint.rotation);
-
-            Powerup powerupScript = powerup.GetComponent<Powerup>();
-            if (powerupScript != null)
-            {
-                powerupScript.type = (Powerup.PowerupType)Random.Range(0, System.Enum.GetValues(typeof(Powerup.PowerupType)).Length);
-                powerupScript.SetRespawn(spawnPoint, powerupRespawnTime);
-            }
-
-            Debug.Log("Powerup Spawned!");
-        }
-    }
-
-
-    public void ShowGameOverScreen()
-    {
-        gameOverScreen.SetActive(true);
-        finalScoreText.text = $"Final Score: {playerScores[1]}";
-        Debug.Log("Game Over Screen Shown");
-    }
-
+    // Adds a player controller to the list if not already registered
     public void RegisterPlayer(PlayerController player)
     {
         if (!playerControllers.Contains(player))
@@ -353,6 +380,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Adds an AI controller to the list if not already registered
     public void RegisterAI(AIController ai)
     {
         if (!aiControllers.Contains(ai))
@@ -361,6 +389,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Removes an AI controller from the list
     public void UnregisterAI(AIController ai)
     {
         if (aiControllers.Contains(ai))
@@ -369,6 +398,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Registers a tank pawn in the tank list
     public void RegisterTank(TankPawn tank)
     {
         if (!tankPawns.Contains(tank))
@@ -377,6 +407,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Removes a tank pawn from the tank list
     public void UnregisterTank(TankPawn tank)
     {
         if (tankPawns.Contains(tank))
@@ -385,22 +416,26 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Logs and applies the two-player mode setting
     public void ApplyTwoPlayerMode()
     {
         bool isTwoPlayer = PlayerPrefs.GetInt("TwoPlayerMode", 0) == 1;
         Debug.Log($"Two Player Mode: {(isTwoPlayer ? "Enabled" : "Disabled")}");
     }
 
+    // Returns the number of currently registered players
     public int GetPlayerCount()
     {
         return playerControllers.Count;
     }
 
+    // Returns the first registered player controller
     public PlayerController GetPlayer()
     {
         return playerControllers.Count > 0 ? playerControllers[0] : null;
     }
 
+    // Respawns a player tank by number and sets it up
     public void RespawnPlayer(int playerNumber)
     {
         if (playerSpawnPoints.Count < 2)
@@ -416,32 +451,31 @@ public class GameManager : MonoBehaviour
         playerController.playerNumber = playerNumber;
         RegisterPlayer(playerController);
 
-        
         if (playerNumber == 1) player1 = player;
         else if (playerNumber == 2) player2 = player;
 
-        // ✅ Update UI and score
         int lives = (playerNumber == 1) ? player1Lives : player2Lives;
         UIManager_GameScene.Instance.UpdateLives(playerNumber, lives);
         ScoreManager.Instance.AddScore(playerNumber, 0);
-
-        // ✅ Refresh camera
         CameraManager.Instance.UpdateCameraMode();
 
         Debug.Log($"Player {playerNumber} respawned!");
     }
 
-
+    // Handles player death and checks for game over
     public void PlayerDied(int playerNumber)
     {
         if (playerNumber == 1) player1Lives--;
         else if (playerNumber == 2) player2Lives--;
 
-        
         UIManager_GameScene.Instance.UpdateLives(playerNumber,
             playerNumber == 1 ? player1Lives : player2Lives);
 
-        if (player1Lives <= 0 && player2Lives <= 0)
+        // One or two player mode?
+        bool isTwoPlayer = PlayerPrefs.GetInt("TwoPlayerMode", 0) == 1;
+
+        if ((!isTwoPlayer && player1Lives <= 0) ||
+            (isTwoPlayer && player1Lives <= 0 && player2Lives <= 0))
         {
             ChangeState(GameState.GameOver);
         }
@@ -456,6 +490,7 @@ public class GameManager : MonoBehaviour
     }
 
 
+    // Starts the coroutine to respawn a powerup
     public void StartPowerupRespawn(Powerup powerup)
     {
         if (powerup != null)
@@ -464,21 +499,31 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Coroutine for respawning a powerup after a delay
     private IEnumerator RespawnPowerup(Powerup powerup)
-{
-    yield return new WaitForSeconds(powerupRespawnTime);
-    if (powerup != null)
     {
-        powerup.ResetPowerup();
+        yield return new WaitForSeconds(powerupRespawnTime);
+        if (powerup != null)
+        {
+            powerup.ResetPowerup();
+        }
+    }
+
+    // Handles restart button click
+    public void OnRestartButton()
+    {
+        Debug.Log("Restarting Game...");
+        ChangeState(GameState.InitGame);
+    }
+
+    // Handles main menu button click
+    public void OnMainMenuButton()
+    {
+        Debug.Log("Returning to Main Menu...");
+        ChangeState(GameState.MainMenu);
     }
 }
 
-
-    private void FindGameUIManager()
-    {
-        gameUIManager = FindObjectOfType<UIManager_GameScene>();
-    }
-}
 
 
 

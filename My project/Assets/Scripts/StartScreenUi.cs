@@ -3,9 +3,7 @@ using UnityEngine.SceneManagement;
 
 public class StartScreenUI : MonoBehaviour
 {
-    /// <summary>
-    /// Loads the main game scene.
-    /// </summary>
+    // Starts the game by changing the GameManager state and loading the main game scene
     public void StartGame()
     {
         if (GameManager.Instance == null)
@@ -23,11 +21,15 @@ public class StartScreenUI : MonoBehaviour
         {
             Debug.LogError("ERROR: 'Main Game' scene is missing from Build Settings!");
         }
+
+        if (AudioManager.Instance != null && !AudioManager.Instance.musicSource.isPlaying)
+        {
+            AudioManager.Instance.musicSource.loop = true;
+            AudioManager.Instance.musicSource.Play();
+        }
     }
 
-    /// <summary>
-    /// Loads the options menu scene.
-    /// </summary>
+    // Opens the options menu by changing state and loading the options scene
     public void OpenOptions()
     {
         if (GameManager.Instance == null)
@@ -48,9 +50,7 @@ public class StartScreenUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Returns to the Main Menu from Options.
-    /// </summary>
+    // Returns to the main menu scene from the options menu
     public void BackToMainMenu()
     {
         if (GameManager.Instance == null)
@@ -62,11 +62,7 @@ public class StartScreenUI : MonoBehaviour
         if (SceneExists("StartScene"))
         {
             Debug.Log("Returning to Main Menu...");
-
-            // Force state change before switching the scene
             GameManager.Instance.ChangeState(GameManager.GameState.MainMenu);
-
-            // Load Main Menu Scene
             SceneManager.LoadScene("StartScene");
         }
         else
@@ -75,22 +71,19 @@ public class StartScreenUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Exits the application.
-    /// </summary>
+    // Quits the application
     public void ExitGame()
     {
         Debug.Log("Quitting game...");
         Application.Quit();
 
 #if UNITY_EDITOR
+        // Stop play mode in editor
         UnityEditor.EditorApplication.isPlaying = false;
 #endif
     }
 
-    /// <summary>
-    /// Checks if a scene exists in Build Settings before loading.
-    /// </summary>
+    // Helper function that checks if a scene exists in the build settings
     private bool SceneExists(string sceneName)
     {
         for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
@@ -104,6 +97,7 @@ public class StartScreenUI : MonoBehaviour
         return false;
     }
 }
+
 
 
 

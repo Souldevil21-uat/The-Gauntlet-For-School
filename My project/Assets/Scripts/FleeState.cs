@@ -5,7 +5,8 @@ public class FleeState : State
     private float fleeSpeed;
     private float safeThreshold = 15f;
     private Vector3 fleeTarget;
-    private float fleeDistance = 10f; // How far it should move away before re-evaluating
+    private float fleeDistance = 10f;
+    private bool targetSet = false;
 
     public FleeState(AIController ai) : base(ai)
     {
@@ -15,6 +16,7 @@ public class FleeState : State
     public override void Enter()
     {
         Debug.Log(aiController.gameObject.name + " entered FleeState!");
+        SetFleeTarget();
     }
 
     public override void Execute(AIController ai)
@@ -23,33 +25,63 @@ public class FleeState : State
 
         if (player == null)
         {
-            Debug.Log(aiController.gameObject.name + " lost sight of the player. Returning to patrol.");
             aiController.ChangeState(new PatrolState(aiController));
             return;
         }
 
         float distanceToPlayer = Vector3.Distance(aiController.transform.position, player.transform.position);
-
         if (distanceToPlayer >= safeThreshold)
         {
-            Debug.Log(aiController.gameObject.name + " reached safe distance. Returning to patrol.");
             aiController.ChangeState(new PatrolState(aiController));
             return;
         }
 
-        // Move directly away from the player's position
-        Vector3 fleeDirection = (aiController.transform.position - player.transform.position).normalized;
-        fleeTarget = aiController.transform.position + fleeDirection * fleeDistance;
-
-        // Check for obstacles
-        if (Physics.Raycast(aiController.transform.position, fleeDirection, out RaycastHit hit, fleeDistance))
+        // If close to flee target, pick a new one
+        if (Vector3.Distance(aiController.transform.position, fleeTarget) < 1f)
         {
-            Debug.LogWarning(aiController.gameObject.name + " hit an obstacle! Adjusting course.");
-            fleeTarget += aiController.transform.right * 3f; // Move slightly to the side to avoid getting stuck
+            SetFleeTarget();
         }
 
         aiController.RotateTowards(fleeTarget);
         aiController.MoveTowards(fleeTarget, fleeSpeed);
+    }
+
+    private void SetFleeTarget()
+    {
+        GameObject player = aiController.player;
+        if (player == null) return;
+
+        Vector3 fleeDirection = (aiController.transform.position - player.transform.position).normalized;
+        Vector3 proposedTarget = aiController.transform.position + fleeDirection * fleeDistance;
+
+        // Check if there's a wall directly behind
+        if (Physics.Raycast(aiController.transform.position, fleeDirection, out RaycastHit hit, fleeDistance))
+        {
+            Debug.LogWarning(aiController.gameObject.name + " flee path blocked. Adjusting...");
+
+            // Try to strafe left
+            Vector3 left = Quaternion.Euler(0, -90, 0) * fleeDirection;
+            if (!Physics.Raycast(aiController.transform.position, left, 3f))
+            {
+                proposedTarget = aiController.transform.position + left * 3f;
+            }
+            else
+            {
+                // Try to strafe right instead
+                Vector3 right = Quaternion.Euler(0, 90, 0) * fleeDirection;
+                if (!Physics.Raycast(aiController.transform.position, right, 3f))
+                {
+                    proposedTarget = aiController.transform.position + right * 3f;
+                }
+                else
+                {
+                    // Totally boxed in, fallback to rotate in place
+                    Debug.Log(aiController.gameObject.name + " is surrounded!");
+                }
+            }
+        }
+
+        fleeTarget = proposedTarget;
     }
 
     public override void Exit()
@@ -57,6 +89,7 @@ public class FleeState : State
         Debug.Log(aiController.gameObject.name + " exited FleeState!");
     }
 }
+
 
 
 

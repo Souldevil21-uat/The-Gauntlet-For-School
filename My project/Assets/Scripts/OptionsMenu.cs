@@ -4,117 +4,121 @@ using UnityEngine.UI;
 public class OptionsMenu : MonoBehaviour
 {
     [Header("Audio Settings")]
-    public Slider musicVolumeSlider;
-    public Slider sfxVolumeSlider;
+    public Slider musicVolumeSlider;        // Slider to control music volume
+    public Slider sfxVolumeSlider;          // Slider to control sound effects volume
 
     [Header("Gameplay Settings")]
-    public Toggle twoPlayerToggle;
-    public Toggle mapOfTheDayToggle;
-    public AudioClip clickClip;
+    public Toggle twoPlayerToggle;          // Toggle to enable/disable two-player mode
+    public Toggle mapOfTheDayToggle;        // Toggle to use "Map of the Day" seed
+    public AudioClip clickClip;             // Sound clip for button clicks
 
     private void Start()
     {
-        // Load the saved value first
+        // Load Two Player preference from PlayerPrefs
         int twoPlayerMode = PlayerPrefs.GetInt("TwoPlayerMode", 0);
-        Debug.Log("🎮 Loaded Two Player Mode from PlayerPrefs: " + twoPlayerMode);
-        
 
         if (twoPlayerToggle != null)
         {
-            twoPlayerToggle.onValueChanged.RemoveAllListeners(); // Prevent event triggering on start
-            twoPlayerToggle.isOn = twoPlayerMode == 1; // Set the correct state
-            twoPlayerToggle.onValueChanged.AddListener(ToggleTwoPlayerMode); // Re-add event listener
+            // Prevent triggering the event while setting the toggle
+            twoPlayerToggle.onValueChanged.RemoveAllListeners();
+            twoPlayerToggle.isOn = twoPlayerMode == 1;
+            twoPlayerToggle.onValueChanged.AddListener(ToggleTwoPlayerMode);
         }
+    }
+
+    private void OnEnable()
+    {
+        // Reload the latest saved settings when the menu is opened
+        LoadSettings();
     }
 
     public void OnMusicVolumeChanged(float volume)
     {
+        // Update music volume in the AudioManager
         AudioManager.Instance.SetMusicVolume(volume);
     }
 
     public void OnSFXVolumeChanged(float volume)
     {
+        // Update sound effect volume in the AudioManager
         AudioManager.Instance.SetSFXVolume(volume);
-    }
-
-
-
-
-    private void OnEnable()
-    {
-        LoadSettings(); // Reload settings every time options menu is opened
     }
 
     public void OnButtonClick()
     {
+        // Play a click sound when a button is pressed
         AudioManager.Instance.PlaySFX(clickClip);
     }
 
     private void LoadSettings()
     {
+        // Load music volume
         if (musicVolumeSlider != null)
             musicVolumeSlider.value = PlayerPrefs.GetFloat("MusicVolume", 1f);
 
+        // Load sound effects volume
         if (sfxVolumeSlider != null)
             sfxVolumeSlider.value = PlayerPrefs.GetFloat("SFXVolume", 1f);
 
+        // Load Two Player toggle state
         if (twoPlayerToggle != null)
             twoPlayerToggle.isOn = PlayerPrefs.GetInt("TwoPlayerMode", 0) == 1;
 
+        // Load Map of the Day toggle state
         if (mapOfTheDayToggle != null)
             mapOfTheDayToggle.isOn = PlayerPrefs.GetInt("MapOfTheDay", 0) == 1;
     }
 
     public void ApplySettings()
     {
-        // Ensure AudioManager is available before applying
+        // Apply and save audio volume settings
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.SetMusicVolume(musicVolumeSlider.value);
             AudioManager.Instance.SetSFXVolume(sfxVolumeSlider.value);
         }
 
-        // Save player settings
+        // Save all settings to PlayerPrefs
         PlayerPrefs.SetFloat("MusicVolume", musicVolumeSlider.value);
         PlayerPrefs.SetFloat("SFXVolume", sfxVolumeSlider.value);
         PlayerPrefs.SetInt("TwoPlayerMode", twoPlayerToggle.isOn ? 1 : 0);
         PlayerPrefs.SetInt("MapOfTheDay", mapOfTheDayToggle.isOn ? 1 : 0);
         PlayerPrefs.Save();
-
-        Debug.Log("✅ Settings Applied & Saved");
     }
 
     public void ToggleTwoPlayerMode(bool isTwoPlayer)
     {
-        // Prevent duplicate calls by checking if the value actually changed
+        // Check if the new value differs from the saved one
         int currentState = PlayerPrefs.GetInt("TwoPlayerMode", 0);
         if ((isTwoPlayer ? 1 : 0) == currentState)
-        {
-            Debug.Log("🔄 Toggle ignored: No change detected.");
-            return; // Exit early if the value is already the same
-        }
+            return;
 
-        Debug.Log("🔄 ToggleTwoPlayerMode() Called: " + isTwoPlayer);
+        // Save the new toggle state
         PlayerPrefs.SetInt("TwoPlayerMode", isTwoPlayer ? 1 : 0);
         PlayerPrefs.Save();
 
-        Debug.Log("✅ Two Player Mode Updated in PlayerPrefs: " + PlayerPrefs.GetInt("TwoPlayerMode"));
-
-        // 🔥 Immediately apply the change if GameManager exists
+        // Apply the change to the GameManager if it's available
         if (GameManager.Instance != null)
         {
             GameManager.Instance.ApplyTwoPlayerMode();
         }
     }
 
-
+    public void SetSFXVolume(float volume)
+    {
+        AudioManager.Instance.SetSFXVolume(volume);
+        PlayerPrefs.SetFloat("SFXVolume", volume);
+        PlayerPrefs.Save();
+    }
 
     public void SetMapOfTheDay(bool isEnabled)
     {
+        // Save the Map of the Day toggle state
         PlayerPrefs.SetInt("MapOfTheDay", isEnabled ? 1 : 0);
         PlayerPrefs.Save();
     }
 }
+
 
 
 

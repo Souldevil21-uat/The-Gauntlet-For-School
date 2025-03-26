@@ -542,6 +542,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  initialAITankCount: 8
   powerupSpawnPoints: []
   powerupPrefab: {fileID: 7274821868661908047, guid: 64331fa40850d544494efe60f8d30932, type: 3}
   powerupRespawnTime: 10
@@ -1178,7 +1179,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   musicSource: {fileID: 1431679534}
-  sfxSource: {fileID: 1431679534}
+  sfxSource: {fileID: 1431679538}
   clip: {fileID: 8300000, guid: b9d273c8aecc87e4d800266b77984660, type: 3}
 --- !u!4 &1431679537
 Transform:

@@ -4,24 +4,23 @@ public class CameraManager : MonoBehaviour
 {
     public static CameraManager Instance { get; private set; } // Singleton
 
-    [Header("Camera References")]
-    public Camera singlePlayerCamera;
-    public Camera player1Camera;
-    public Camera player2Camera;
+    public Camera singlePlayerCamera; // Used for single player mode
+    public Camera player1Camera;      // Used for split-screen Player 1
+    public Camera player2Camera;      // Used for split-screen Player 2
 
-    [Header("Camera Follow Settings")]
-    public Transform player1Target;
-    public Transform player2Target;
-    public float smoothSpeed = 5f;
+    public Transform player1Target;   // Target to follow for Player 1
+    public Transform player2Target;   // Target to follow for Player 2
+    public float smoothSpeed = 5f;    // Camera follow speed
 
-    private int playerCount = 1;
+    private int playerCount = 1;      // Tracks how many players are active
 
     private void Awake()
     {
+        // Ensure only one instance exists
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(gameObject); // Persist between scenes
         }
         else
         {
@@ -37,13 +36,14 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
+        // Set initial camera mode based on player count
         UpdateCameraMode();
     }
 
     private void LateUpdate()
     {
-        FindPlayerTargets();  // Keep checking if player targets exist
-        FollowPlayers();      // Then follow them
+        FindPlayerTargets();  // Constantly update references to active players
+        FollowPlayers();      // Smoothly follow each target
     }
 
     public void UpdateCameraMode()
@@ -51,73 +51,61 @@ public class CameraManager : MonoBehaviour
         bool isTwoPlayer = PlayerPrefs.GetInt("TwoPlayerMode", 0) == 1;
         playerCount = isTwoPlayer ? 2 : 1;
 
+        // Set up the correct camera(s) depending on player count
         if (playerCount == 1)
         {
-            Debug.Log("🎥 Single Player Mode: Enabling SinglePlayerCamera only");
-
             singlePlayerCamera.gameObject.SetActive(true);
             player1Camera.gameObject.SetActive(false);
             player2Camera.gameObject.SetActive(false);
-
-            singlePlayerCamera.rect = new Rect(0f, 0f, 1f, 1f); // Fullscreen
+            singlePlayerCamera.rect = new Rect(0f, 0f, 1f, 1f);
         }
         else if (playerCount == 2)
         {
-            Debug.Log("🎮 Two Player Mode: Enabling Split-Screen Cameras");
-
             singlePlayerCamera.gameObject.SetActive(false);
             player1Camera.gameObject.SetActive(true);
             player2Camera.gameObject.SetActive(true);
-
-            player1Camera.rect = new Rect(0f, 0f, 0.5f, 1f);  // Left half
-            player2Camera.rect = new Rect(0.5f, 0f, 0.5f, 1f); // Right half
+            player1Camera.rect = new Rect(0f, 0f, 0.5f, 1f);
+            player2Camera.rect = new Rect(0.5f, 0f, 0.5f, 1f);
         }
 
+        // Update the camera targets to follow correct players
         FindPlayerTargets();
     }
 
     private void FindPlayerTargets()
     {
-        // Find Player 1
+        // Update Player 1 target if necessary
         if (GameManager.Instance.player1 != null)
         {
             Transform newTarget = GameManager.Instance.player1.transform;
-
             if (player1Target != newTarget)
             {
                 player1Target = newTarget;
-                Debug.Log("🎯 Player 1 Target Updated: " + player1Target.name);
             }
         }
 
-        // Find Player 2 (Check for clones dynamically)
+        // Update Player 2 target dynamically based on tag
         GameObject activePlayer2 = GameObject.FindWithTag("Player 2");
         if (activePlayer2 != null)
         {
             Transform newTarget = activePlayer2.transform;
-
             if (player2Target != newTarget)
             {
                 player2Target = newTarget;
-                Debug.Log("🎯 Player 2 Target Updated: " + player2Target.name);
             }
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ No Active Player 2 Found! Split-screen camera might be broken.");
         }
     }
 
-
-
     private void FollowPlayers()
     {
+        // Single player follow
         if (playerCount == 1 && singlePlayerCamera != null && player1Target != null)
         {
             Vector3 targetPosition = player1Target.position + new Vector3(0, 10, -10);
             singlePlayerCamera.transform.position = Vector3.Lerp(singlePlayerCamera.transform.position, targetPosition, smoothSpeed * Time.deltaTime);
             singlePlayerCamera.transform.LookAt(player1Target);
         }
+        // Split-screen follow logic
         else if (playerCount == 2)
         {
             if (player1Camera != null && player1Target != null)
@@ -136,13 +124,14 @@ public class CameraManager : MonoBehaviour
         }
     }
 
-    // Allows external scripts to manually update the camera settings
+    // External control for updating player count manually
     public void SetPlayerCount(int count)
     {
         playerCount = Mathf.Clamp(count, 1, 2);
         UpdateCameraMode();
     }
 }
+
 
 
 

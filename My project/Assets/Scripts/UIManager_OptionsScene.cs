@@ -4,27 +4,28 @@ using UnityEngine.SceneManagement;
 
 public class UIManager_OptionsScene : MonoBehaviour
 {
-    public Toggle twoPlayerToggle;
-    public Slider sfxVolumeSlider;
-    public Slider musicVolumeSlider;
+    public Toggle twoPlayerToggle;             // Toggle for enabling two-player mode
+    public Slider sfxVolumeSlider;             // Slider for sound effects volume
+    public Slider musicVolumeSlider;           // Slider for music volume
+    public AudioClip clickClip;                // Clip played on button click
 
     private void Start()
     {
         LoadSettings();
 
-        // Manually apply the loaded volume values to AudioManager
+        // Apply volume to AudioManager on scene start
         AudioManager.Instance?.SetSFXVolume(sfxVolumeSlider.value);
         AudioManager.Instance?.SetMusicVolume(musicVolumeSlider.value);
     }
 
-    public AudioClip clickClip;
-
+    // Called when any button in the options menu is clicked
     public void OnButtonClick()
     {
         AudioManager.Instance.PlaySFX(clickClip);
         Debug.Log("Button clicked!");
     }
 
+    // Loads saved settings and sets UI elements accordingly
     public void LoadSettings()
     {
         if (twoPlayerToggle != null)
@@ -46,12 +47,14 @@ public class UIManager_OptionsScene : MonoBehaviour
         }
     }
 
+    // Saves the two-player mode preference
     public void SetTwoPlayerMode(bool isTwoPlayer)
     {
         PlayerPrefs.SetInt("TwoPlayerMode", isTwoPlayer ? 1 : 0);
         PlayerPrefs.Save();
     }
 
+    // Saves and applies the SFX volume setting
     public void SetSFXVolume(float volume)
     {
         PlayerPrefs.SetFloat("SFXVolume", volume);
@@ -59,6 +62,7 @@ public class UIManager_OptionsScene : MonoBehaviour
         AudioManager.Instance?.SetSFXVolume(volume);
     }
 
+    // Saves and applies the music volume setting
     public void SetMusicVolume(float volume)
     {
         PlayerPrefs.SetFloat("MusicVolume", volume);
@@ -66,6 +70,7 @@ public class UIManager_OptionsScene : MonoBehaviour
         AudioManager.Instance?.SetMusicVolume(volume);
     }
 
+    // Returns to the main menu scene
     public void ReturnToMainMenu()
     {
         if (GameManager.Instance != null)
@@ -76,4 +81,5 @@ public class UIManager_OptionsScene : MonoBehaviour
         SceneManager.LoadScene("StartScene");
     }
 }
+
 

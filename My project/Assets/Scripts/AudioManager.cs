@@ -2,31 +2,33 @@ using UnityEngine;
 
 public class AudioManager : MonoBehaviour
 {
+    // Singleton reference to this instance
     public static AudioManager Instance { get; private set; }
 
-    [Header("Audio Sources")]
-    public AudioSource musicSource;
-    public AudioSource sfxSource;
-    public AudioClip clip;
+    public AudioSource musicSource; // Handles background music
+    public AudioSource sfxSource;   // Handles sound effects
+    public AudioClip clip;          // Test clip for SFX playback
 
     private void Awake()
     {
+        // Set up the singleton instance
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(gameObject); // Persist across scenes
         }
         else
         {
-            Destroy(gameObject);
+            Destroy(gameObject); // Prevent duplicates
             return;
         }
 
-        LoadAudioSettings(); // Ensure saved settings apply on startup
+        LoadAudioSettings(); // Apply saved volume settings
     }
 
     private void Update()
     {
+        // Test SFX playback with the T key
         if (Input.GetKeyDown(KeyCode.T))
         {
             Debug.Log("TEST: Playing death clip manually");
@@ -34,7 +36,17 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // Set Music Volume with a null check
+    private void Start()
+    {
+        if (musicSource != null && !musicSource.isPlaying)
+        {
+            musicSource.loop = true;
+            musicSource.Play();
+        }
+    }
+
+
+    // Adjust music volume and save the setting
     public void SetMusicVolume(float volume)
     {
         if (musicSource != null)
@@ -49,7 +61,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // Set SFX Volume with a null check
+    // Adjust SFX volume and save the setting
     public void SetSFXVolume(float volume)
     {
         if (sfxSource != null)
@@ -64,7 +76,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // Play a sound effect with a null check
+    // Play a sound effect if possible
     public void PlaySFX(AudioClip clip)
     {
         if (sfxSource != null && clip != null)
@@ -77,7 +89,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // Load saved volume settings on startup
+    // Load saved volume settings for music and SFX
     private void LoadAudioSettings()
     {
         if (musicSource != null)
@@ -90,7 +102,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // Toggle Mute for Music
+    // Toggle mute status for music and save preference
     public void ToggleMusicMute()
     {
         if (musicSource != null)
@@ -101,7 +113,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // Toggle Mute for SFX
+    // Toggle mute status for SFX and save preference
     public void ToggleSFXMute()
     {
         if (sfxSource != null)
@@ -112,5 +124,6 @@ public class AudioManager : MonoBehaviour
         }
     }
 }
+
 
 

@@ -33,7 +33,12 @@ public abstract class AIController : Controller
         base.Start();
         GameManager.Instance.RegisterAI(this);
         // Attempt to find the player manually
-        player = GameObject.FindWithTag("Player");
+        PlayerController[] players = GameObject.FindObjectsOfType<PlayerController>();
+        if (players.Length > 0)
+        {
+            player = GetNearestPlayer(players);
+        }
+
 
         if (player == null)
         {
@@ -47,15 +52,40 @@ public abstract class AIController : Controller
         }
     }
 
+    private GameObject GetNearestPlayer(PlayerController[] players)
+    {
+        GameObject nearest = null;
+        float minDistance = Mathf.Infinity;
+
+        foreach (var p in players)
+        {
+            float distance = Vector3.Distance(transform.position, p.transform.position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearest = p.gameObject;
+            }
+        }
+
+        return nearest;
+    }
+
+
     public GameObject GetPlayer()
     {
         return GameManager.Instance.GetPlayer()?.gameObject;
     }
 
 
-    protected override void Update()
+    protected override void FixedUpdate()
     {
         base.Update();
+
+        // Refresh player if missing (e.g., after respawn)
+        if (player == null)
+        {
+            player = GameObject.FindWithTag("Player");
+        }
 
         if (currentState != null)
         {
@@ -97,18 +127,19 @@ public abstract class AIController : Controller
     // Moves the AI toward a target position
     public void MoveTowards(Vector3 targetPosition, float speed)
     {
-        if (!CanMove())
-        {
-            Debug.Log(gameObject.name + " tried to move but CannotMove() returned false.");
-            return;
-        }
-
-        Debug.Log(gameObject.name + " moving towards: " + targetPosition);
+        if (!CanMove()) return;
 
         Vector3 direction = (targetPosition - transform.position).normalized;
-        pawn.Move(speed);
+
+        TankPawn tankPawn = pawn as TankPawn;
+        if (tankPawn != null)
+        {
+            tankPawn.MoveInDirection(direction, speed);
+        }
+
         RotateTowards(targetPosition);
     }
+
 
     // Rotates the AI toward a target position
     public void RotateTowards(Vector3 targetPosition)

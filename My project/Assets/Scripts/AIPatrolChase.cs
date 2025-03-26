@@ -6,6 +6,7 @@ public class AIPatrolChase : AIController
     [Header("Patrol Settings")]
     private int currentPatrolIndex = 0;
     public bool loopPatrol = true; // Determines if AI loops waypoints or stops at the last one
+    [SerializeField] public float waypointTolerance = 1.5f;
 
     protected override void Start()
     {
@@ -26,6 +27,7 @@ public class AIPatrolChase : AIController
     protected override void Update()
     {
         base.Update();
+
 
         // If AI sees the player, switch to chase mode
         if (CanSeePlayer() && !(currentState is ChaseState))
