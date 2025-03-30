@@ -332,13 +332,35 @@ public class GameManager : MonoBehaviour
 
         if (finalScoreText != null)
         {
-            int score = ScoreManager.Instance?.GetScore(1) ?? 0;
-            finalScoreText.text = $"Final Score: {score}";
+            int score1 = ScoreManager.Instance?.GetScore(1) ?? 0;
+            int score2 = ScoreManager.Instance?.GetScore(2) ?? 0;
+            bool isTwoPlayer = PlayerPrefs.GetInt("TwoPlayerMode", 0) == 1;
+
+            if (!isTwoPlayer)
+            {
+                if (score1 >= 2000)
+                    finalScoreText.text = "Victory! Final Score: {score1}";
+                else
+                    finalScoreText.text = "Game Over! Final Score: {score1}";
+            }
+            else
+            {
+                if (score1 >= 2000 && score2 >= 2000)
+                    finalScoreText.text = "Team Victory!\nP1 Score: {score1}\nP2 Score: {score2}";
+                else if (score1 >= 2000)
+                    finalScoreText.text = "Player 1 Wins!\nP1 Score: {score1}\nP2 Score: {score2}";
+                else if (score2 >= 2000)
+                    finalScoreText.text = "Player 2 Wins!\nP1 Score: {score1}\nP2 Score: {score2}";
+                else
+                    finalScoreText.text = "Game Over!\nP1 Score: {score1}\nP2 Score: {score2}";
+            }
         }
         else
         {
             Debug.LogWarning("Final Score Text is missing!");
         }
+
+
 
         Button restartButton = gameOverScreen?.transform.Find("Restart")?.GetComponent<Button>();
         Button mainMenuButton = gameOverScreen?.transform.Find("MainMenu")?.GetComponent<Button>();

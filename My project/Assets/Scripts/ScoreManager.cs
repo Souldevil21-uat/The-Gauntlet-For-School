@@ -52,6 +52,11 @@ public class ScoreManager : MonoBehaviour
             gameUIManager.UpdateScore(playerNumber, playerScores[playerNumber]);
         }
 
+        if (playerScores[playerNumber] >= 2000)
+        {
+            GameManager.Instance.ChangeState(GameManager.GameState.GameOver);
+        }
+
         return playerScores[playerNumber]; // Return updated score
     }
 
